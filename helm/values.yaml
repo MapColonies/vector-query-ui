@@ -1,0 +1,244 @@
+global:
+  cloudProvider:
+    dockerRegistryUrl: "registry.example.com"
+    imagePullSecretName: "registry-pull-secret"
+    flavor: "openshift"
+
+enabled: true
+replicaCount: 1
+revisionHistoryLimit: 5
+nodePort: 30080
+resetOnConfigChange: true
+
+nameOverride: ""
+fullnameOverride: ""
+
+cloudProvider:
+  dockerRegistryUrl: "registry.example.com"
+  imagePullSecretName: "registry-pull-secret"
+  flavor: "openshift"
+
+image:
+  repository: "vector-query-ui"
+  tag: "v1.0.0-rc23"
+  pullPolicy: "IfNotPresent"
+
+env:
+  port: 80
+  targetPort: 8080
+  protocol: "TCP"
+  nodeEnv: "production"
+  direct: true
+
+  api:
+    baseUrl: ""
+    apiKey: ""
+    apiKeyHeader: "x-api-key"
+
+  wfs:
+    url: "example.com/geoserver/wfs"
+    apiKey: ""
+    apiKeyHeader: "x-api-key"
+    version: "1.1.0"
+    srsName: "EPSG:4326"
+    featureNS: "http://www.example.com/app"
+    featurePrefix: "app"
+    geometryName: "geom"
+    maxFeatures: 200
+    servers: []
+
+  wmts:
+    cswUrl: "https://catalog.example.com/csw"
+    serviceUrl: "https://wmts.example.com"
+    productIds: []
+    capabilitiesUrl: ""
+    layer: "ortho"
+    matrixSet: "WorldCRS84"
+    style: "default"
+    format: "image/png"
+    osmFallback: false
+    apiKey: ""
+    apiKeyHeader: "x-api-key"
+    apiKeyParam: ""
+
+  map:
+    projection: "EPSG:4326"
+    center: [ 0, 0 ]
+    zoom: 12
+    customProjections: {}
+
+  threeD:
+    enabled: true
+
+  history:
+    enabled: true
+    versionedSuffix: "_versioned"
+    validFromProperty: "valid_from"
+    validToProperty: "valid_to"
+    identityProperties: [ "gfid", "osm_id" ]
+
+  ui:
+    title: "Geo Query"
+    direction: "ltr"
+    disclaimer: "Development tool only — provided as-is, with no warranty and no responsibility for its results."
+
+nginxConf: |
+  server {
+      listen 8080;
+      server_name _;
+      root /usr/share/nginx/html;
+      index index.html;
+
+      gzip on;
+      gzip_types text/css application/javascript application/json image/svg+xml;
+
+      add_header Access-Control-Allow-Origin "*" always;
+      add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+      add_header Access-Control-Allow-Headers "Content-Type, Authorization, x-api-key" always;
+      add_header Access-Control-Max-Age "86400" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header Referrer-Policy "no-referrer" always;
+
+      location /healthz {
+          return 200 'ok';
+          add_header Content-Type text/plain;
+      }
+
+      include /etc/nginx/app-proxy/*.conf;
+
+      location /assets/ {
+          add_header Access-Control-Allow-Origin "*" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header Cache-Control "public, max-age=31536000, immutable";
+      }
+
+      location = /index.html {
+          add_header Access-Control-Allow-Origin "*" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header Cache-Control "no-store";
+      }
+
+      location / {
+          if ($request_method = OPTIONS) {
+              return 204;
+          }
+          try_files $uri $uri/ /index.html;
+      }
+  }
+
+secret:
+  create: true
+  data: {}
+  existingSecret: ""
+
+existingConfigMap: ""
+
+service:
+  type: "ClusterIP"
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: "/healthz"
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: "/healthz"
+
+resources:
+  enabled: true
+  value:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
+
+podAnnotations:
+  prometheus.io/scrape: "false"
+
+podSecurityContext:
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+
+nodeSelector:
+  kubernetes.io/os: linux
+
+tolerations: []
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 1
+      preference:
+        matchExpressions:
+        - key: "kubernetes.io/os"
+          operator: "In"
+          values: [ "linux" ]
+
+extraVolumes:
+- name: "tmp"
+  emptyDir: {}
+
+extraVolumeMounts:
+- name: "tmp"
+  mountPath: "/tmp/extra"
+
+extraEnvVars:
+- name: "TZ"
+  value: "UTC"
+
+sidecars: []
+command: []
+args: []
+
+route:
+  enabled: true
+  path: "/"
+  host: "geo-query-ui.example.com"
+  timeout:
+    enabled: true
+    duration: "60s"
+  rewriteTarget: ""
+  tls:
+    enabled: true
+    termination: "edge"
+    insecureEdgeTerminationPolicy: "Redirect"
+    useCerts: false
+    certificate: ""
+    key: ""
+    caCertificate: ""
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  labels: {}
+  hosts:
+  - host: "geo-query.example.com"
+    paths:
+    - path: "/"
+      pathType: "Prefix"
+  tls:
+  - secretName: "geo-query-tls"
+    hosts:
+    - "geo-query.example.com"
+
+mclabels:
+  component: "frontend"
+  partOf: "geo-query"
+  owner: "common"
+  prometheus:
+    enabled: false

@@ -1,0 +1,8 @@
+{
+  "wmts": {
+    "osmFallback": true
+  },
+  "ui": {
+    "disclaimer": "Development tool only — provided as-is, with no warranty and no responsibility for its results."
+  }
+}

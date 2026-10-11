@@ -1,0 +1,92 @@
+{
+  "api": {
+    "baseUrl": "API_BASE_URL",
+    "apiKey": "API_KEY",
+    "apiKeyHeader": "API_KEY_HEADER"
+  },
+  "wmts": {
+    "cswUrl": "CSW_URL",
+    "serviceUrl": "WMTS_SERVICE_URL",
+    "productIds": {
+      "__name": "WMTS_PRODUCT_IDS",
+      "__format": "json"
+    },
+    "capabilitiesUrl": "WMTS_CAPABILITIES_URL",
+    "layer": "WMTS_LAYER",
+    "matrixSet": "WMTS_MATRIX_SET",
+    "style": "WMTS_STYLE",
+    "format": "WMTS_FORMAT",
+    "osmFallback": {
+      "__name": "WMTS_OSM_FALLBACK",
+      "__format": "boolean"
+    },
+    "apiKey": "WMTS_API_KEY",
+    "apiKeyHeader": "WMTS_API_KEY_HEADER",
+    "apiKeyParam": "WMTS_API_KEY_PARAM"
+  },
+  "wfs": {
+    "url": "WFS_URL",
+    "version": "WFS_VERSION",
+    "srsName": "WFS_SRS_NAME",
+    "featureNS": "WFS_FEATURE_NS",
+    "featurePrefix": "WFS_FEATURE_PREFIX",
+    "geometryName": "WFS_GEOMETRY_NAME",
+    "maxFeatures": {
+      "__name": "WFS_MAX_FEATURES",
+      "__format": "number"
+    },
+    "servers": {
+      "__name": "WFS_SERVERS",
+      "__format": "json"
+    },
+    "apiKey": "WFS_API_KEY",
+    "apiKeyHeader": "WFS_API_KEY_HEADER"
+  },
+  "map": {
+    "projection": "MAP_PROJECTION",
+    "center": {
+      "__name": "MAP_CENTER",
+      "__format": "json"
+    },
+    "zoom": {
+      "__name": "MAP_ZOOM",
+      "__format": "number"
+    },
+    "customProjections": {
+      "__name": "MAP_CUSTOM_PROJECTIONS",
+      "__format": "json"
+    }
+  },
+  "ui": {
+    "title": "UI_TITLE",
+    "direction": "UI_DIRECTION",
+    "disclaimer": "UI_DISCLAIMER"
+  },
+  "history": {
+    "enabled": {
+      "__name": "HISTORY_ENABLED",
+      "__format": "boolean"
+    },
+    "versionedSuffix": "HISTORY_VERSIONED_SUFFIX",
+    "validFromProperty": "HISTORY_VALID_FROM",
+    "validToProperty": "HISTORY_VALID_TO",
+    "identityProperties": {
+      "__name": "HISTORY_IDENTITY_PROPERTIES",
+      "__format": "json"
+    }
+  },
+  "threeD": {
+    "enabled": {
+      "__name": "THREED_ENABLED",
+      "__format": "boolean"
+    }
+  },
+  "proxy": {
+    "__name": "APP_PROXY",
+    "__format": "json"
+  },
+  "direct": {
+    "__name": "APP_DIRECT",
+    "__format": "boolean"
+  }
+}

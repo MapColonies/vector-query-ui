@@ -1,0 +1,7 @@
+node_modules
+dist
+.git
+*.log
+# per-machine overrides must never be baked into the image
+config/local.json
+.env

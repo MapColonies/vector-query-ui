@@ -1,0 +1,61 @@
+{{- if and .Values.enabled (not .Values.existingConfigMap) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "geo-query-ui.fullname" . }}
+  labels:
+    {{- include "geo-query-ui.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.env.nodeEnv | quote }}
+  {{- with .Values.env.api }}
+  API_BASE_URL: {{ .baseUrl | quote }}
+  API_KEY_HEADER: {{ .apiKeyHeader | quote }}
+  {{- end }}
+  {{- with .Values.env.wfs }}
+  WFS_URL: {{ .url | quote }}
+  WFS_VERSION: {{ .version | quote }}
+  WFS_SRS_NAME: {{ .srsName | quote }}
+  WFS_FEATURE_NS: {{ .featureNS | quote }}
+  WFS_FEATURE_PREFIX: {{ .featurePrefix | quote }}
+  WFS_GEOMETRY_NAME: {{ .geometryName | quote }}
+  WFS_MAX_FEATURES: {{ .maxFeatures | quote }}
+  WFS_SERVERS: {{ toJson (.servers | default list) | quote }}
+  WFS_API_KEY_HEADER: {{ .apiKeyHeader | quote }}
+  {{- end }}
+  {{- with .Values.env.wmts }}
+  CSW_URL: {{ .cswUrl | quote }}
+  WMTS_SERVICE_URL: {{ .serviceUrl | quote }}
+  WMTS_PRODUCT_IDS: {{ toJson (.productIds | default list) | quote }}
+  WMTS_CAPABILITIES_URL: {{ .capabilitiesUrl | quote }}
+  WMTS_LAYER: {{ .layer | quote }}
+  WMTS_MATRIX_SET: {{ .matrixSet | quote }}
+  WMTS_STYLE: {{ .style | quote }}
+  WMTS_FORMAT: {{ .format | quote }}
+  WMTS_OSM_FALLBACK: {{ .osmFallback | quote }}
+  WMTS_API_KEY_HEADER: {{ .apiKeyHeader | quote }}
+  WMTS_API_KEY_PARAM: {{ .apiKeyParam | default "" | quote }}
+  {{- end }}
+  {{- with .Values.env.map }}
+  MAP_PROJECTION: {{ .projection | quote }}
+  MAP_CENTER: {{ toJson .center | quote }}
+  MAP_ZOOM: {{ .zoom | quote }}
+  MAP_CUSTOM_PROJECTIONS: {{ toJson .customProjections | quote }}
+  {{- end }}
+  {{- with .Values.env.ui }}
+  UI_TITLE: {{ .title | quote }}
+  UI_DIRECTION: {{ .direction | quote }}
+  UI_DISCLAIMER: {{ .disclaimer | default "" | quote }}
+  {{- end }}
+  {{- with .Values.proxy }}
+  APP_PROXY: {{ tpl (toJson .) $ | quote }}
+  {{- end }}
+  APP_DIRECT: {{ .Values.env.direct | default true | quote }}
+  THREED_ENABLED: {{ .Values.env.threeD.enabled | quote }}
+  {{- with .Values.env.history }}
+  HISTORY_ENABLED: {{ .enabled | quote }}
+  HISTORY_VERSIONED_SUFFIX: {{ .versionedSuffix | quote }}
+  HISTORY_VALID_FROM: {{ .validFromProperty | quote }}
+  HISTORY_VALID_TO: {{ .validToProperty | quote }}
+  HISTORY_IDENTITY_PROPERTIES: {{ toJson (.identityProperties | default list) | quote }}
+  {{- end }}
+{{- end -}}

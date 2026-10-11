@@ -1,0 +1,55 @@
+{
+  "api": {
+    "baseUrl": "",
+    "apiKey": "",
+    "apiKeyHeader": "x-api-key"
+  },
+  "wmts": {
+    "cswUrl": "",
+    "serviceUrl": "",
+    "productIds": [],
+    "capabilitiesUrl": "",
+    "layer": "",
+    "matrixSet": "",
+    "style": "",
+    "format": "image/png",
+    "osmFallback": true,
+    "apiKey": "",
+    "apiKeyHeader": "x-api-key"
+  },
+  "wfs": {
+    "url": "https://geo.example.com/geoserver/wfs",
+    "version": "1.1.0",
+    "srsName": "EPSG:4326",
+    "featureNS": "http://www.example.com/app",
+    "featurePrefix": "app",
+    "geometryName": "geom",
+    "maxFeatures": 10,
+    "servers": [],
+    "apiKey": "",
+    "apiKeyHeader": "x-api-key"
+  },
+  "map": {
+    "projection": "EPSG:4326",
+    "center": [0, 0],
+    "zoom": 2,
+    "customProjections": {}
+  },
+  "ui": {
+    "title": "Vector query",
+    "direction": "ltr",
+    "disclaimer": ""
+  },
+  "history": {
+    "enabled": true,
+    "versionedSuffix": "_versioned",
+    "validFromProperty": "valid_from",
+    "validToProperty": "valid_to",
+    "identityProperties": ["gfid", "osm_id"]
+  },
+  "threeD": {
+    "enabled": true
+  },
+  "proxy": {},
+  "direct": true
+}
