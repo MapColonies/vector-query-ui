@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/MapColonies/vector-query-ui/compare/v1.0.0...v1.1.0) (2026-10-11)
+
+
+### Features
+
+* configure 3d extrusion between two height fields ([31e0975](https://github.com/MapColonies/vector-query-ui/commit/31e0975010fa28b8a1140ee5e4c6897aacf383e3))
+
+
+### Bug Fixes
+
+* draw 3d features relative to their ground height ([ad29d7f](https://github.com/MapColonies/vector-query-ui/commit/ad29d7ffb17412fcb8c169d4734d10cd49a9fee5))
+
 ## 1.0.0 (2026-10-11)
 
 
