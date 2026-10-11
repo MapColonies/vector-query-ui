@@ -22,7 +22,7 @@
     "ol": "^10.3.1",
     "proj4": "^2.15.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.3.0",
     "vite-plugin-cesium": "^1.2.23"
   },
   "devDependencies": {
@@ -34,7 +34,7 @@
     "@map-colonies/prettier-config": "^1.0.0",
     "@types/proj4": "^2.5.5",
     "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/eslint-plugin": "^1.6.27",
     "eslint": "^10.8.1",
