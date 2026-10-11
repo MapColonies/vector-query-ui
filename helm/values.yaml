@@ -69,6 +69,9 @@ env:
 
   threeD:
     enabled: true
+    extrude:
+      from: ""
+      to: "coordinates"
 
   history:
     enabled: true

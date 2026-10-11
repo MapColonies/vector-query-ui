@@ -121,7 +121,7 @@ export interface AppConfig {
    * per-feature viewer in the panel. Off hides both entirely, and the Cesium
    * globe is never constructed.
    */
-  threeD?: { enabled: boolean };
+  threeD?: { enabled: boolean; extrude?: { from: string; to: string } };
 }
 
 /** Baked-in defaults — the same `config/default.json` the config script starts from. */

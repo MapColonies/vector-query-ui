@@ -26,7 +26,7 @@ interface Props {
   config: AppConfig;
 }
 
-const HEIGHT_KEYS = ['relative_feature_height', 'height', 'building_height'];
+const COORDINATES = 'coordinates';
 const FILL = Color.fromCssColorString('#5cc8ff').withAlpha(0.55);
 const FILL_SELECTED = Color.fromCssColorString('#ffd166').withAlpha(0.8);
 const LINE = Color.fromCssColorString('#5cc8ff');
@@ -52,14 +52,11 @@ function threeD(feature: Feature) {
   return null;
 }
 
-function heightOf(feature: Feature): number {
-  const props = feature.getProperties();
-  for (const key of HEIGHT_KEYS) {
-    const raw: unknown = props[key];
-    const n = typeof raw === 'string' ? Number(raw) : (raw as number);
-    if (Number.isFinite(n) && n > 0) return n;
-  }
-  return 0;
+function fieldHeight(feature: Feature, field: string): number | null {
+  if (field === '' || field === COORDINATES) return null;
+  const raw: unknown = feature.get(field);
+  const n = typeof raw === 'string' ? Number(raw) : (raw as number);
+  return Number.isFinite(n) ? n : null;
 }
 
 async function baseImagery(config: AppConfig, report: (line: string) => void): Promise<ImageryLayer | null> {
@@ -170,6 +167,7 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
     v.entities.removeAll();
 
     const toLonLat = (c: number[]): number[] => (srsName === 'EPSG:4326' ? c : [...transform([c[0], c[1]], srsName, 'EPSG:4326'), c[2]]);
+    const extrude = { from: config.threeD?.extrude?.from ?? '', to: config.threeD?.extrude?.to ?? COORDINATES };
 
     let drew = 0;
     for (const feature of features) {
@@ -177,10 +175,15 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
       if (!found) continue;
       const isSelected = feature === selectedFeature;
       const polys = rings(found.coords);
-      const extra = heightOf(feature);
+      const top = fieldHeight(feature, extrude.to);
+      const bottom = fieldHeight(feature, extrude.from);
+      const bottomIsZ = extrude.from === COORDINATES;
+      const allZs = polys.length === 0 ? [(found.coords as number[])[2]] : polys.flat().map((c) => c[2]);
+      const base = bottomIsZ ? Math.min(...allZs) : bottom;
+      const lift = (c: number[]): number[] => [c[0], c[1], (bottomIsZ || top === null ? c[2] : top) - (base ?? 0)];
 
       if (polys.length === 0) {
-        const c = toLonLat(found.coords as number[]);
+        const c = lift(toLonLat(found.coords as number[]));
         v.entities.add({
           position: Cartesian3.fromDegrees(c[0], c[1], c[2]),
           point: {
@@ -197,15 +200,15 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
 
       const closed = found.type.includes('Polygon');
       for (const ring of polys) {
-        const lonlat = ring.map(toLonLat);
+        const lonlat = ring.map((c) => lift(toLonLat(c)));
         const positions = lonlat.map((c) => Cartesian3.fromDegrees(c[0], c[1], c[2]));
         if (closed) {
-          const floor = Math.min(...lonlat.map((c) => c[2])) - (extra || 0);
+          const other = bottomIsZ ? (top === null ? null : top - (base ?? 0)) : base === null ? null : 0;
           v.entities.add({
             polygon: {
               hierarchy: new PolygonHierarchy(positions),
               perPositionHeight: true,
-              extrudedHeight: extra > 0 ? floor : undefined,
+              extrudedHeight: other ?? undefined,
               material: isSelected ? FILL_SELECTED : FILL,
               outline: true,
               outlineColor: isSelected ? LINE_SELECTED : LINE,
