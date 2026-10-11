@@ -48,7 +48,11 @@
     "identityProperties": ["gfid", "osm_id"]
   },
   "threeD": {
-    "enabled": true
+    "enabled": true,
+    "extrude": {
+      "from": "",
+      "to": "coordinates"
+    }
   },
   "proxy": {},
   "direct": true

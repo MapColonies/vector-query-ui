@@ -51,6 +51,10 @@ data:
   {{- end }}
   APP_DIRECT: {{ .Values.env.direct | default true | quote }}
   THREED_ENABLED: {{ .Values.env.threeD.enabled | quote }}
+  {{- with .Values.env.threeD.extrude }}
+  THREED_EXTRUDE_FROM: {{ .from | quote }}
+  THREED_EXTRUDE_TO: {{ .to | quote }}
+  {{- end }}
   {{- with .Values.env.history }}
   HISTORY_ENABLED: {{ .enabled | quote }}
   HISTORY_VERSIONED_SUFFIX: {{ .versionedSuffix | quote }}

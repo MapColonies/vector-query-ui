@@ -79,6 +79,14 @@
     "enabled": {
       "__name": "THREED_ENABLED",
       "__format": "boolean"
+    },
+    "extrude": {
+      "from": {
+        "__name": "THREED_EXTRUDE_FROM"
+      },
+      "to": {
+        "__name": "THREED_EXTRUDE_TO"
+      }
     }
   },
   "proxy": {
