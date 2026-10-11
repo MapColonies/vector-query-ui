@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- No web fonts on purpose: this runs on disconnected networks, where a
+         request to fonts.googleapis.com only costs a render delay. styles.css
+         names Inter and IBM Plex Mono first and falls back to the system UI
+         and monospace faces when they are not installed locally. -->
+    <title>Vector query</title>
+    <!-- Replaced with the resolved config/ document: by vite when serving or
+         building, and again by the container entrypoint on startup. -->
+    <!-- app-config -->
+    <!-- /app-config -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

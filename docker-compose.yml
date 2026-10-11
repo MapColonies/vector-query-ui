@@ -1,0 +1,15 @@
+services:
+  geo-query-ui:
+    build: .
+    ports:
+      - "8080:8080"
+    # config.json is rendered from these at startup; the full mapping lives in
+    # config/custom-environment-variables.json. Mounting a file over
+    # /usr/share/nginx/html/config.json also still works, but then the
+    # entrypoint cannot rewrite it — pick one or the other.
+    environment:
+      API_BASE_URL: /api
+      WFS_URL: /geoserver/wfs
+      WFS_FEATURE_NS: app
+      WFS_FEATURE_PREFIX: app
+      UI_TITLE: Geo Query

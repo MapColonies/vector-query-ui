@@ -1,0 +1,13 @@
+# Patterns to ignore when building packages and loading the chart.
+.DS_Store
+.git/
+.gitignore
+*.swp
+*.tmp
+*.orig
+*.bak
+
+# Plain-text copies kept for reading. Without this, anything in templates/ is
+# rendered as a manifest whatever its extension — the copies would come out as
+# a second Deployment and Secret with the same names as the real ones.
+*.txt

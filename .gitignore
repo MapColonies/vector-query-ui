@@ -1,0 +1,9 @@
+node_modules
+dist
+*.log
+.DS_Store
+# machine-specific config overrides
+config/local.json
+.env
+myvalues.yaml
+*.tgz

@@ -1,0 +1,30 @@
+{
+  "name": "geo-query-ui",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "config:print": "node scripts/build-config.mjs --print",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cesium": "^1.145.0",
+    "monaco-editor": "^0.56.0",
+    "ol": "^10.3.1",
+    "proj4": "^2.15.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite-plugin-cesium": "^1.2.23"
+  },
+  "devDependencies": {
+    "@types/proj4": "^2.5.5",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}
