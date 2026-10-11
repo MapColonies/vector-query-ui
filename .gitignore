@@ -7,3 +7,4 @@ config/local.json
 .env
 myvalues.yaml
 *.tgz
+reports
