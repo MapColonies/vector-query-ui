@@ -2,6 +2,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json* ./
+COPY .husky/ .husky/
 RUN npm ci || npm install
 COPY tsconfig.json vite.config.ts index.html ./
 # `scripts/` resolves config/ into index.html; `config/` is both its input and
