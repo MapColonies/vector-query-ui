@@ -27,6 +27,7 @@ interface Props {
 }
 
 const HEIGHT_KEYS = ['relative_feature_height', 'height', 'building_height'];
+const GROUND_KEY = 'absolute_ground_surface_height';
 const FILL = Color.fromCssColorString('#5cc8ff').withAlpha(0.55);
 const FILL_SELECTED = Color.fromCssColorString('#ffd166').withAlpha(0.8);
 const LINE = Color.fromCssColorString('#5cc8ff');
@@ -60,6 +61,12 @@ function heightOf(feature: Feature): number {
     if (Number.isFinite(n) && n > 0) return n;
   }
   return 0;
+}
+
+function groundOf(feature: Feature): number | null {
+  const raw: unknown = feature.get(GROUND_KEY);
+  const n = typeof raw === 'string' ? Number(raw) : (raw as number);
+  return Number.isFinite(n) ? n : null;
 }
 
 async function baseImagery(config: AppConfig, report: (line: string) => void): Promise<ImageryLayer | null> {
@@ -170,6 +177,7 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
     v.entities.removeAll();
 
     const toLonLat = (c: number[]): number[] => (srsName === 'EPSG:4326' ? c : [...transform([c[0], c[1]], srsName, 'EPSG:4326'), c[2]]);
+    const lift = (c: number[], ground: number | null): number[] => (ground === null ? c : [c[0], c[1], c[2] - ground]);
 
     let drew = 0;
     for (const feature of features) {
@@ -178,9 +186,10 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
       const isSelected = feature === selectedFeature;
       const polys = rings(found.coords);
       const extra = heightOf(feature);
+      const ground = groundOf(feature);
 
       if (polys.length === 0) {
-        const c = toLonLat(found.coords as number[]);
+        const c = lift(toLonLat(found.coords as number[]), ground);
         v.entities.add({
           position: Cartesian3.fromDegrees(c[0], c[1], c[2]),
           point: {
@@ -197,15 +206,15 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
 
       const closed = found.type.includes('Polygon');
       for (const ring of polys) {
-        const lonlat = ring.map(toLonLat);
+        const lonlat = ring.map((c) => lift(toLonLat(c), ground));
         const positions = lonlat.map((c) => Cartesian3.fromDegrees(c[0], c[1], c[2]));
         if (closed) {
-          const floor = Math.min(...lonlat.map((c) => c[2])) - (extra || 0);
+          const floor = ground === null ? Math.min(...lonlat.map((c) => c[2])) - (extra || 0) : 0;
           v.entities.add({
             polygon: {
               hierarchy: new PolygonHierarchy(positions),
               perPositionHeight: true,
-              extrudedHeight: extra > 0 ? floor : undefined,
+              extrudedHeight: ground !== null || extra > 0 ? floor : undefined,
               material: isSelected ? FILL_SELECTED : FILL,
               outline: true,
               outlineColor: isSelected ? LINE_SELECTED : LINE,
