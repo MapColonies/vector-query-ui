@@ -37,7 +37,9 @@ export function parseGeoJsonGeometry(text: string, sourceProjection: string, tar
     return g;
   }
   if (typeof type === 'string') {
-    return format.readGeometry(parsed, options);
+    const geometry = format.readGeometry(parsed, options);
+    if (!geometry) throw new Error('Geometry is empty');
+    return geometry;
   }
   throw new Error('Missing "type" — expected a Geometry, Feature or FeatureCollection');
 }
