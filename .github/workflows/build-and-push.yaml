@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 env:
-  DOMAIN: YOUR_DOMAIN
+  DOMAIN: vector
 
 jobs:
   push-docker-image:
