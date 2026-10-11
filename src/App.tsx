@@ -1,30 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type Feature from "ol/Feature";
-import type Geometry from "ol/geom/Geometry";
-import type Map from "ol/Map";
-import type { Extent } from "ol/extent";
-import { loadConfig, type AppConfig, type WfsConfig } from "./config";
-import { LayersApi, type LayersApiLike } from "./api/client";
-import { FallbackLayersApi, WfsMetaApi } from "./api/wfsMeta";
-import type { LayerProperty } from "./api/types";
-import MapView, { type BaseMapSpec, type DrawMode } from "./map/MapView";
-import Map3DView from "./map/Map3DView";
-import { fetchCswRecords, type CswRecord } from "./api/csw";
-import QueryPanel from "./query/QueryPanel";
-import ResultsTable from "./components/ResultsTable";
-import HistoryTimeline from "./history/HistoryTimeline";
-import FeatureDiff, { type DiffSlot } from "./history/FeatureDiff";
-import ExchangeViewer from "./components/ExchangeViewer";
-import ElevationProfile from "./components/ElevationProfile";
-import Feature3D from "./components/Feature3D";
-import {
-  QueryError,
-  buildGetFeatureXml,
-  executeQuery,
-  withShape,
-  type QuerySpec,
-  type SpatialFilter,
-} from "./query/wfs";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type Feature from 'ol/Feature';
+import type Geometry from 'ol/geom/Geometry';
+import type Map from 'ol/Map';
+import type { Extent } from 'ol/extent';
+import { loadConfig, type AppConfig, type WfsConfig } from './config';
+import { LayersApi, type LayersApiLike } from './api/client';
+import { FallbackLayersApi, WfsMetaApi } from './api/wfsMeta';
+import type { LayerProperty } from './api/types';
+import MapView, { type BaseMapSpec, type DrawMode } from './map/MapView';
+import Map3DView from './map/Map3DView';
+import { fetchCswRecords, type CswRecord } from './api/csw';
+import QueryPanel from './query/QueryPanel';
+import ResultsTable from './components/ResultsTable';
+import HistoryTimeline from './history/HistoryTimeline';
+import FeatureDiff, { type DiffSlot } from './history/FeatureDiff';
+import ExchangeViewer from './components/ExchangeViewer';
+import ElevationProfile from './components/ElevationProfile';
+import Feature3D from './components/Feature3D';
+import { QueryError, buildGetFeatureXml, executeQuery, withShape, type QuerySpec, type SpatialFilter } from './query/wfs';
 
 /** How many catalog products may be stacked on the map at once. */
 const MAX_BASE_MAPS = 3;
@@ -33,15 +26,15 @@ export default function App() {
   // Injected into the page before the bundle runs, so it is there from the start
   const config = useMemo<AppConfig>(() => loadConfig(), []);
 
-  const [features, setFeatures] = useState<Feature<Geometry>[]>([]);
+  const [features, setFeatures] = useState<Feature[]>([]);
   const [resultProps, setResultProps] = useState<LayerProperty[]>([]);
-  const [selected, setSelected] = useState<Feature<Geometry> | null>(null);
+  const [selected, setSelected] = useState<Feature | null>(null);
   /** Layer of the last run, so history knows which versioned type to read. */
   const [queriedLayer, setQueriedLayer] = useState<string | null>(null);
   /** A past version picked from the timeline, drawn over the results. */
-  const [versionFeature, setVersionFeature] = useState<Feature<Geometry> | null>(null);
-  const [diffA, setDiffA] = useState<Feature<Geometry> | null>(null);
-  const [diffB, setDiffB] = useState<Feature<Geometry> | null>(null);
+  const [versionFeature, setVersionFeature] = useState<Feature | null>(null);
+  const [diffA, setDiffA] = useState<Feature | null>(null);
+  const [diffB, setDiffB] = useState<Feature | null>(null);
   const [running, setRunning] = useState(false);
   const [queryError, setQueryError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -59,30 +52,21 @@ export default function App() {
   // `wfs` config is the only one and there is nothing to pick.
   const servers = config.wfs.servers ?? [];
   const [serverIndex, setServerIndex] = useState(0);
-  const activeServer =
-    servers.length > 0 ? servers[Math.min(serverIndex, servers.length - 1)] : null;
+  const activeServer = servers.length > 0 ? servers[Math.min(serverIndex, servers.length - 1)] : null;
 
   // The version is the one WFS setting worth switching at runtime — servers
   // differ in what they speak, and comparing answers is part of debugging.
-  const [wfsVersion, setWfsVersion] = useState(
-    servers[0]?.version ?? config.wfs.version ?? "1.1.0",
-  );
+  const [wfsVersion, setWfsVersion] = useState(servers[0]?.version ?? config.wfs.version ?? '1.1.0');
   const wfs = useMemo<WfsConfig>(() => {
     const overrides = activeServer
       ? {
           url: activeServer.url,
           ...(activeServer.srsName ? { srsName: activeServer.srsName } : {}),
           ...(activeServer.featureNS ? { featureNS: activeServer.featureNS } : {}),
-          ...(activeServer.featurePrefix
-            ? { featurePrefix: activeServer.featurePrefix }
-            : {}),
-          ...(activeServer.geometryName
-            ? { geometryName: activeServer.geometryName }
-            : {}),
+          ...(activeServer.featurePrefix ? { featurePrefix: activeServer.featurePrefix } : {}),
+          ...(activeServer.geometryName ? { geometryName: activeServer.geometryName } : {}),
           ...(activeServer.apiKey ? { apiKey: activeServer.apiKey } : {}),
-          ...(activeServer.apiKeyHeader
-            ? { apiKeyHeader: activeServer.apiKeyHeader }
-            : {}),
+          ...(activeServer.apiKeyHeader ? { apiKeyHeader: activeServer.apiKeyHeader } : {}),
         }
       : {};
     return { ...config.wfs, ...overrides, version: wfsVersion };
@@ -91,7 +75,7 @@ export default function App() {
   /** Switching servers re-arms that server's own dialect and metadata source. */
   function selectServer(index: number) {
     setServerIndex(index);
-    setWfsVersion(servers[index]?.version ?? config.wfs.version ?? "1.1.0");
+    setWfsVersion(servers[index]?.version ?? config.wfs.version ?? '1.1.0');
     setMetaNotice(null);
   }
 
@@ -106,8 +90,7 @@ export default function App() {
     fetchCswRecords(cswUrl, ctrl.signal)
       .then(setRecords)
       .catch((e: unknown) => {
-        if (!ctrl.signal.aborted)
-          setRecordsError(e instanceof Error ? e.message : String(e));
+        if (!ctrl.signal.aborted) setRecordsError(e instanceof Error ? e.message : String(e));
       });
     return () => ctrl.abort();
   }, [config]);
@@ -118,15 +101,8 @@ export default function App() {
   const { baseMaps, missingIds } = useMemo(() => {
     const empty = { baseMaps: [] as BaseMapSpec[], missingIds: [] as string[] };
     if (records.length === 0) return empty;
-    const ids = (config.wmts.productIds ?? [])
-      .filter(Boolean)
-      .slice(0, MAX_BASE_MAPS);
-    const chosen =
-      ids.length > 0
-        ? ids
-            .map((id) => records.find((r) => r.id === id))
-            .filter((r): r is CswRecord => !!r)
-        : [records[0]];
+    const ids = (config.wmts.productIds ?? []).filter(Boolean).slice(0, MAX_BASE_MAPS);
+    const chosen = ids.length > 0 ? ids.map((id) => records.find((r) => r.id === id)).filter((r): r is CswRecord => !!r) : [records[0]];
     return {
       baseMaps: chosen.map((r) => ({
         capabilitiesUrl: r.capabilitiesUrl,
@@ -149,16 +125,10 @@ export default function App() {
     const apiBaseUrl = activeServer ? activeServer.apiBaseUrl : config.api.baseUrl;
     if (!apiBaseUrl) return meta;
     return new FallbackLayersApi(new LayersApi(apiBaseUrl, config.api), meta, (error) =>
-      setMetaNotice(
-        `Layers API unavailable (${error}) — reading layer metadata from the WFS itself`,
-      ),
+      setMetaNotice(`Layers API unavailable (${error}) — reading layer metadata from the WFS itself`)
     );
   }, [config, activeServer, wfs.url]);
-  const capturingApi = useMemo<LayersApiLike>(
-    () =>
-      new PropCapturingApi(layersApi, (props) => (lastDetailProps.current = props)),
-    [layersApi],
-  );
+  const capturingApi = useMemo<LayersApiLike>(() => new PropCapturingApi(layersApi, (props) => (lastDetailProps.current = props)), [layersApi]);
 
   /** `xmlOverride` is a hand-edited request; it is POSTed instead of the generated one. */
   async function runQuery(spec: QuerySpec, xmlOverride?: string) {
@@ -179,13 +149,8 @@ export default function App() {
       const result = await executeQuery(wfs, body, ctrl.signal);
       setResponseXml(result.responseXml);
       setFeatures(result.features);
-      setResultProps(
-        spec.property
-          ? [spec.property, ...resultPropsFor(spec)]
-          : resultPropsFor(spec),
-      );
-      if (result.features.length === 0)
-        setQueryError("No features matched the filter");
+      setResultProps(spec.property ? [spec.property, ...resultPropsFor(spec)] : resultPropsFor(spec));
+      if (result.features.length === 0) setQueryError('No features matched the filter');
     } catch (e: unknown) {
       if (!ctrl.signal.aborted) {
         setFeatures([]);
@@ -201,9 +166,7 @@ export default function App() {
   // and let ResultsTable pick informative columns from whatever came back.
   const lastDetailProps = useRef<LayerProperty[]>([]);
   function resultPropsFor(spec: QuerySpec): LayerProperty[] {
-    return lastDetailProps.current.filter(
-      (p) => p.property !== spec.property?.property,
-    );
+    return lastDetailProps.current.filter((p) => p.property !== spec.property?.property);
   }
 
   function clearAll() {
@@ -227,24 +190,24 @@ export default function App() {
   }, []);
 
   const handleBboxDrawn = useCallback((extent: Extent) => {
-    setSpatial((cur) => withShape(cur, { kind: "bbox", extent }));
+    setSpatial((cur) => withShape(cur, { kind: 'bbox', extent }));
     setDrawing(null);
   }, []);
 
   const handlePolygonDrawn = useCallback((geometry: Geometry) => {
-    setSpatial((cur) => withShape(cur, { kind: "geometry", geometry }));
+    setSpatial((cur) => withShape(cur, { kind: 'geometry', geometry }));
     setDrawing(null);
   }, []);
 
   /** A vertex was dragged on the map — the edited shape replaces the old one. */
   const handleGeometryEdited = useCallback((geometry: Geometry) => {
-    setSpatial((cur) => withShape(cur, { kind: "geometry", geometry }));
+    setSpatial((cur) => withShape(cur, { kind: 'geometry', geometry }));
   }, []);
 
   const cancelDraw = useCallback(() => setDrawing(null), []);
 
   /** Clicking the selected row again deselects it. */
-  const toggleSelected = useCallback((f: Feature<Geometry> | null) => {
+  const toggleSelected = useCallback((f: Feature | null) => {
     setSelected((cur) => (cur === f ? null : f));
   }, []);
 
@@ -253,10 +216,7 @@ export default function App() {
    * that once the view has flown to a feature filling the screen, the next
    * click could only ever deselect it. Empty map still clears.
    */
-  const selectFromMap = useCallback(
-    (f: Feature<Geometry> | null) => setSelected(f),
-    [],
-  );
+  const selectFromMap = useCallback((f: Feature | null) => setSelected(f), []);
 
   /** Snap the bbox to whatever the map is currently showing. */
   function useViewExtent() {
@@ -266,9 +226,9 @@ export default function App() {
     setDrawing(null);
     setSpatial((cur) =>
       withShape(cur, {
-        kind: "bbox",
+        kind: 'bbox',
         extent: map.getView().calculateExtent(size),
-      }),
+      })
     );
   }
 
@@ -283,13 +243,8 @@ export default function App() {
         />
       )}
       {config.threeD?.enabled && (
-        <button
-          type="button"
-          className="map3d-toggle"
-          onClick={() => setThreeD((v) => !v)}
-          title={threeD ? "Show the 2D map" : "Show 3D geometry"}
-        >
-          {threeD ? "2D" : "3D"}
+        <button type="button" className="map3d-toggle" onClick={() => setThreeD((v) => !v)} title={threeD ? 'Show the 2D map' : 'Show 3D geometry'}>
+          {threeD ? '2D' : '3D'}
         </button>
       )}
       <MapView
@@ -333,29 +288,15 @@ export default function App() {
               setDrawing(null);
             }}
             onVersionChange={setWfsVersion}
-            onRun={runQuery}
+            onRun={(spec, xml) => void runQuery(spec, xml)}
             onClear={clearAll}
           />
-          {recordsError && (
-            <div className="notice">Catalog: {recordsError}</div>
-          )}
-          {missingIds.length > 0 && (
-            <div className="notice">
-              Configured base maps not in the catalog: {missingIds.join(", ")}
-            </div>
-          )}
+          {recordsError && <div className="notice">Catalog: {recordsError}</div>}
+          {missingIds.length > 0 && <div className="notice">Configured base maps not in the catalog: {missingIds.join(', ')}</div>}
           {metaNotice && <div className="notice">{metaNotice}</div>}
           {notice && <div className="notice">{notice}</div>}
-          {queryError && (
-            <div className="notice notice-error">{queryError}</div>
-          )}
-          <ResultsTable
-            features={features}
-            properties={resultProps}
-            selected={selected}
-            featureProjection={wfs.srsName}
-            onSelect={toggleSelected}
-          />
+          {queryError && <div className="notice notice-error">{queryError}</div>}
+          <ResultsTable features={features} properties={resultProps} selected={selected} featureProjection={wfs.srsName} onSelect={toggleSelected} />
           {config.threeD?.enabled && (
             <>
               <Feature3D feature={versionFeature ?? selected} />
@@ -379,17 +320,10 @@ export default function App() {
               selected={versionFeature ?? selected}
               properties={resultProps}
               featureProjection={wfs.srsName}
-              onPin={(slot: DiffSlot, feature) =>
-                slot === "a" ? setDiffA(feature) : setDiffB(feature)
-              }
+              onPin={(slot: DiffSlot, feature) => (slot === 'a' ? setDiffA(feature) : setDiffB(feature))}
             />
           )}
-          <ExchangeViewer
-            requestXml={requestXml}
-            responseXml={responseXml}
-            features={features}
-            featureProjection={wfs.srsName}
-          />
+          <ExchangeViewer requestXml={requestXml} responseXml={responseXml} features={features} featureProjection={wfs.srsName} />
         </div>
       </aside>
     </div>
@@ -398,14 +332,14 @@ export default function App() {
 
 /** Thin wrapper so App can remember the last-loaded layer's properties. */
 class PropCapturingApi implements LayersApiLike {
-  constructor(
+  public constructor(
     private readonly inner: LayersApiLike,
-    private readonly onProps: (props: LayerProperty[]) => void,
+    private readonly onProps: (props: LayerProperty[]) => void
   ) {}
-  listLayers(signal?: AbortSignal) {
+  public async listLayers(signal?: AbortSignal) {
     return this.inner.listLayers(signal);
   }
-  async getLayer(layerName: string, signal?: AbortSignal) {
+  public async getLayer(layerName: string, signal?: AbortSignal) {
     const d = await this.inner.getLayer(layerName, signal);
     this.onProps(d.properties);
     return d;

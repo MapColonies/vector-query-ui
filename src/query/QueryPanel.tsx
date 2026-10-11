@@ -1,17 +1,11 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import type Geometry from "ol/geom/Geometry";
-import type { LayersApiLike } from "../api/client";
-import type { DrawMode } from "../map/MapView";
-import {
-  isGeometryProperty,
-  layerLabel,
-  propertyLabel,
-  type LayerDetail,
-  type LayerProperty,
-  type LayerSummary
-} from "../api/types";
-import type { Extent } from "ol/extent";
-import type { WfsConfig, WfsServer } from "../config";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import type Geometry from 'ol/geom/Geometry';
+import type { Extent } from 'ol/extent';
+import type { LayersApiLike } from '../api/client';
+import type { DrawMode } from '../map/MapView';
+import { isGeometryProperty, layerLabel, propertyLabel, type LayerDetail, type LayerProperty, type LayerSummary } from '../api/types';
+import type { WfsConfig, WfsServer } from '../config';
+import { copyText } from '../clipboard';
 import {
   DISTANCE_UNITS,
   SPATIAL_OPERATORS,
@@ -20,8 +14,8 @@ import {
   operatorsFor,
   spatialOperatorsFor,
   type OperatorId,
-  type SpatialOperatorId
-} from "./operators";
+  type SpatialOperatorId,
+} from './operators';
 import {
   DEFAULT_DISTANCE,
   DEFAULT_GEOMETRY_NAME,
@@ -32,17 +26,16 @@ import {
   toCurlCommand,
   withShape,
   type QuerySpec,
-  type SpatialFilter
-} from "./wfs";
-import { GEOJSON_DEFAULT_CRS, geometryToGeoJson, parseGeoJsonGeometry } from "./geojson";
-import { copyText } from "../clipboard";
+  type SpatialFilter,
+} from './wfs';
+import { GEOJSON_DEFAULT_CRS, geometryToGeoJson, parseGeoJsonGeometry } from './geojson';
 
 // Monaco is by far the heaviest thing in the app — split it out and fetch it
 // the first time a code box is actually shown.
-const CodeEditor = lazy(() => import("../components/CodeEditor"));
+const CodeEditor = lazy(async () => import('../components/CodeEditor'));
 
 /** Versions OpenLayers can write a GetFeature document for. */
-const WFS_VERSIONS = ["1.0.0", "1.1.0", "2.0.0"];
+const WFS_VERSIONS = ['1.0.0', '1.1.0', '2.0.0'];
 
 interface Props {
   api: LayersApiLike;
@@ -63,7 +56,7 @@ interface Props {
   onClear: () => void;
 }
 
-type SpatialMode = "none" | "bbox" | "geojson";
+type SpatialMode = 'none' | 'bbox' | 'geojson';
 
 export default function QueryPanel({
   api,
@@ -79,24 +72,24 @@ export default function QueryPanel({
   onSpatialChange,
   onVersionChange,
   onRun,
-  onClear
+  onClear,
 }: Props) {
   const [layers, setLayers] = useState<LayerSummary[]>([]);
   const [layersError, setLayersError] = useState<string | null>(null);
 
-  const [selectedLayerName, setSelectedLayerName] = useState("");
+  const [selectedLayerName, setSelectedLayerName] = useState('');
   const [detail, setDetail] = useState<LayerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
-  const [selectedPropName, setSelectedPropName] = useState("");
-  const [operator, setOperator] = useState<OperatorId>("eq");
-  const [value, setValue] = useState("");
+  const [selectedPropName, setSelectedPropName] = useState('');
+  const [operator, setOperator] = useState<OperatorId>('eq');
+  const [value, setValue] = useState('');
   const [maxFeatures, setMaxFeatures] = useState(wfs.maxFeatures ?? 200);
 
-  const [spatialMode, setSpatialMode] = useState<SpatialMode>("none");
-  const [bboxText, setBboxText] = useState("");
-  const [geoJsonText, setGeoJsonText] = useState("");
+  const [spatialMode, setSpatialMode] = useState<SpatialMode>('none');
+  const [bboxText, setBboxText] = useState('');
+  const [geoJsonText, setGeoJsonText] = useState('');
   const [geoJsonCrs, setGeoJsonCrs] = useState(GEOJSON_DEFAULT_CRS);
   const [spatialError, setSpatialError] = useState<string | null>(null);
 
@@ -110,7 +103,7 @@ export default function QueryPanel({
   useEffect(() => {
     const ctrl = new AbortController();
     setLayers([]);
-    setSelectedLayerName("");
+    setSelectedLayerName('');
     setLayersError(null);
     api
       .listLayers(ctrl.signal)
@@ -124,8 +117,8 @@ export default function QueryPanel({
   // Load layer detail on selection
   useEffect(() => {
     setDetail(null);
-    setSelectedPropName("");
-    setValue("");
+    setSelectedPropName('');
+    setValue('');
     setDetailError(null);
     if (!selectedLayerName) return;
     const ctrl = new AbortController();
@@ -141,16 +134,10 @@ export default function QueryPanel({
   }, [api, selectedLayerName]);
 
   // Dropdowns sort by what the user reads — the label, not the raw name
-  const sortedLayers = useMemo(
-    () => [...layers].sort((a, b) => layerLabel(a).localeCompare(layerLabel(b))),
-    [layers]
-  );
+  const sortedLayers = useMemo(() => [...layers].sort((a, b) => layerLabel(a).localeCompare(layerLabel(b))), [layers]);
 
   const queryableProps = useMemo(
-    () =>
-      (detail?.properties ?? [])
-        .filter((p) => !isGeometryProperty(p))
-        .sort((a, b) => propertyLabel(a).localeCompare(propertyLabel(b))),
+    () => (detail?.properties ?? []).filter((p) => !isGeometryProperty(p)).sort((a, b) => propertyLabel(a).localeCompare(propertyLabel(b))),
     [detail]
   );
 
@@ -161,8 +148,8 @@ export default function QueryPanel({
 
   // Reset operator/value when property changes
   useEffect(() => {
-    setValue("");
-    setOperator("eq");
+    setValue('');
+    setOperator('eq');
   }, [selectedPropName]);
 
   const operators = selectedProp ? operatorsFor(selectedProp) : [];
@@ -170,12 +157,12 @@ export default function QueryPanel({
 
   // A bbox drawn on the map arrives from above — reflect it in the coordinate box
   useEffect(() => {
-    if (spatial?.shape.kind !== "bbox") return;
+    if (spatial?.shape.kind !== 'bbox') return;
     const extent = spatial.shape.extent;
     const current = parseExtent(bboxText);
     const unchanged = current?.every((n, i) => Math.abs(n - extent[i]) < 1e-6);
     if (!unchanged) {
-      setSpatialMode("bbox");
+      setSpatialMode('bbox');
       setBboxText(formatExtent(extent));
       setSpatialError(null);
     }
@@ -187,11 +174,11 @@ export default function QueryPanel({
 
   // A shape drawn on the map arrives the same way — write it back out as text
   useEffect(() => {
-    if (spatial?.shape.kind !== "geometry" || spatial.shape.geometry === ownGeometryRef.current) {
+    if (spatial?.shape.kind !== 'geometry' || spatial.shape.geometry === ownGeometryRef.current) {
       return;
     }
     ownGeometryRef.current = spatial.shape.geometry;
-    setSpatialMode("geojson");
+    setSpatialMode('geojson');
     setGeoJsonText(geometryToGeoJson(spatial.shape.geometry, geoJsonCrs, wfs.srsName));
     setSpatialError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,23 +186,23 @@ export default function QueryPanel({
 
   /** Back to a bare fetch-all: no attribute condition, no spatial constraint. */
   function clearFilter() {
-    setSelectedPropName("");
-    setValue("");
-    setOperator("eq");
-    selectMode("none");
+    setSelectedPropName('');
+    setValue('');
+    setOperator('eq');
+    selectMode('none');
   }
 
   function selectMode(mode: SpatialMode) {
     setSpatialMode(mode);
     setSpatialError(null);
-    if (mode === "none") onSpatialChange(null);
-    else if (mode === "bbox") applyBboxText(bboxText);
+    if (mode === 'none') onSpatialChange(null);
+    else if (mode === 'bbox') applyBboxText(bboxText);
     else applyGeoJson(geoJsonText, geoJsonCrs);
   }
 
   function applyBboxText(text: string) {
     setBboxText(text);
-    if (text.trim() === "") {
+    if (text.trim() === '') {
       setSpatialError(null);
       onSpatialChange(null);
       return;
@@ -226,13 +213,13 @@ export default function QueryPanel({
       return;
     }
     setSpatialError(null);
-    onSpatialChange(withShape(spatial, { kind: "bbox", extent }));
+    onSpatialChange(withShape(spatial, { kind: 'bbox', extent }));
   }
 
   function applyGeoJson(text: string, crs: string) {
     setGeoJsonText(text);
     setGeoJsonCrs(crs);
-    if (text.trim() === "") {
+    if (text.trim() === '') {
       setSpatialError(null);
       onSpatialChange(null);
       return;
@@ -240,7 +227,7 @@ export default function QueryPanel({
     try {
       const geometry = parseGeoJsonGeometry(text, crs, wfs.srsName);
       ownGeometryRef.current = geometry;
-      onSpatialChange(withShape(spatial, { kind: "geometry", geometry }));
+      onSpatialChange(withShape(spatial, { kind: 'geometry', geometry }));
       setSpatialError(null);
     } catch (e) {
       setSpatialError(e instanceof Error ? e.message : String(e));
@@ -248,7 +235,7 @@ export default function QueryPanel({
   }
 
   // No filter is required — a layer alone fetches everything up to the cap.
-  const attributeReady = !!selectedProp && value.trim() !== "";
+  const attributeReady = !!selectedProp && value.trim() !== '';
   const canRun = !!selectedLayerName && !running;
 
   const spec: QuerySpec | null = selectedLayerName
@@ -256,12 +243,12 @@ export default function QueryPanel({
         layerName: selectedLayerName,
         ...(attributeReady ? { property: selectedProp, operator, value: value.trim() } : {}),
         ...(spatial ? { spatial } : {}),
-        maxFeatures
+        maxFeatures,
       }
     : null;
 
   const generatedXml = useMemo(() => {
-    if (!spec) return "";
+    if (!spec) return '';
     try {
       return buildGetFeatureXml(wfs, spec);
     } catch (e) {
@@ -273,11 +260,11 @@ export default function QueryPanel({
   /** What "Run query" would POST — the hand-edited document when there is one. */
   const requestBody = editedXml ?? generatedXml;
 
-  const [curlState, setCurlState] = useState<"idle" | "copied" | "failed">("idle");
+  const [curlState, setCurlState] = useState<'idle' | 'copied' | 'failed'>('idle');
   async function copyAsCurl() {
     if (!requestBody) return;
-    setCurlState((await copyText(toCurlCommand(wfs, requestBody))) ? "copied" : "failed");
-    setTimeout(() => setCurlState("idle"), 1600);
+    setCurlState((await copyText(toCurlCommand(wfs, requestBody))) ? 'copied' : 'failed');
+    setTimeout(() => setCurlState('idle'), 1600);
   }
 
   return (
@@ -285,11 +272,7 @@ export default function QueryPanel({
       {servers.length > 0 && (
         <div className="field col-full">
           <label htmlFor="server-select">GeoServer</label>
-          <select
-            id="server-select"
-            value={serverIndex}
-            onChange={(e) => onServerChange(Number(e.target.value))}
-          >
+          <select id="server-select" value={serverIndex} onChange={(e) => onServerChange(Number(e.target.value))}>
             {servers.map((s, i) => (
               <option key={s.name} value={i}>
                 {s.name}
@@ -304,11 +287,7 @@ export default function QueryPanel({
 
       <div className="field">
         <label htmlFor="layer-select">Layer</label>
-        <select
-          id="layer-select"
-          value={selectedLayerName}
-          onChange={(e) => setSelectedLayerName(e.target.value)}
-        >
+        <select id="layer-select" value={selectedLayerName} onChange={(e) => setSelectedLayerName(e.target.value)}>
           <option value="">Select a layer…</option>
           {sortedLayers.map((l) => (
             <option key={l.layerName} value={l.layerName}>
@@ -327,13 +306,8 @@ export default function QueryPanel({
       <div className="field">
         <label htmlFor="prop-select">Field</label>
         <div className="field-row">
-          <select
-            id="prop-select"
-            value={selectedPropName}
-            onChange={(e) => setSelectedPropName(e.target.value)}
-            disabled={!detail || detailLoading}
-          >
-            <option value="">{detailLoading ? "Loading fields…" : "Select a field…"}</option>
+          <select id="prop-select" value={selectedPropName} onChange={(e) => setSelectedPropName(e.target.value)} disabled={!detail || detailLoading}>
+            <option value="">{detailLoading ? 'Loading fields…' : 'Select a field…'}</option>
             {queryableProps.map((p) => (
               <option key={p.property} value={p.property}>
                 {propertyLabel(p)}
@@ -346,7 +320,7 @@ export default function QueryPanel({
               className="btn-ghost btn-field-clear"
               title="Remove the property filter"
               aria-label="Remove the property filter"
-              onClick={() => setSelectedPropName("")}
+              onClick={() => setSelectedPropName('')}
             >
               ×
             </button>
@@ -364,11 +338,7 @@ export default function QueryPanel({
         <div className="field-row col-full">
           <div className="field field-op">
             <label htmlFor="op-select">Operator</label>
-            <select
-              id="op-select"
-              value={operator}
-              onChange={(e) => setOperator(e.target.value as OperatorId)}
-            >
+            <select id="op-select" value={operator} onChange={(e) => setOperator(e.target.value as OperatorId)}>
               {operators.map((op) => (
                 <option key={op.id} value={op.id}>
                   {op.label} ({op.symbol})
@@ -380,30 +350,22 @@ export default function QueryPanel({
           <div className="field field-value">
             <label htmlFor="value-input">Value</label>
             {hasChoices ? (
-              <select
-                id="value-input"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              >
+              <select id="value-input" value={value} onChange={(e) => setValue(e.target.value)}>
                 <option value="">Select a value…</option>
-                {[...selectedProp.possibleValues!].sort((a, b) => a.localeCompare(b)).map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))}
+                {[...selectedProp.possibleValues!]
+                  .sort((a, b) => a.localeCompare(b))
+                  .map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
               </select>
             ) : (
               <input
                 id="value-input"
-                type={
-                  isNumericType(selectedProp.type)
-                    ? "number"
-                    : isDateType(selectedProp.type)
-                      ? "datetime-local"
-                      : "text"
-                }
+                type={isNumericType(selectedProp.type) ? 'number' : isDateType(selectedProp.type) ? 'datetime-local' : 'text'}
                 value={value}
-                placeholder={isNumericType(selectedProp.type) ? "123" : "text to match"}
+                placeholder={isNumericType(selectedProp.type) ? '123' : 'text to match'}
                 onChange={(e) => setValue(e.target.value)}
               />
             )}
@@ -416,93 +378,55 @@ export default function QueryPanel({
         <div className="segmented">
           {(
             [
-              ["none", "None"],
-              ["bbox", "Bounding box"],
-              ["geojson", "GeoJSON"]
+              ['none', 'None'],
+              ['bbox', 'Bounding box'],
+              ['geojson', 'GeoJSON'],
             ] as [SpatialMode, string][]
           ).map(([mode, label]) => (
-            <button
-              key={mode}
-              type="button"
-              className={spatialMode === mode ? "segment segment-active" : "segment"}
-              onClick={() => selectMode(mode)}
-            >
+            <button key={mode} type="button" className={spatialMode === mode ? 'segment segment-active' : 'segment'} onClick={() => selectMode(mode)}>
               {label}
             </button>
           ))}
         </div>
 
-        {spatialMode === "bbox" && (
+        {spatialMode === 'bbox' && (
           <>
             <div className="bbox-actions">
-              <button
-                type="button"
-                className={drawing === "bbox" ? "btn-primary" : "btn-ghost"}
-                onClick={() => onDraw("bbox")}
-              >
-                {drawing === "bbox" ? "Drag on the map…" : "Draw box"}
+              <button type="button" className={drawing === 'bbox' ? 'btn-primary' : 'btn-ghost'} onClick={() => onDraw('bbox')}>
+                {drawing === 'bbox' ? 'Drag on the map…' : 'Draw box'}
               </button>
               <button type="button" className="btn-ghost" onClick={onUseViewExtent}>
                 Current view
               </button>
             </div>
-            <input
-              className="mono"
-              value={bboxText}
-              placeholder="minX, minY, maxX, maxY"
-              onChange={(e) => applyBboxText(e.target.value)}
-            />
+            <input className="mono" value={bboxText} placeholder="minX, minY, maxX, maxY" onChange={(e) => applyBboxText(e.target.value)} />
             <span className="hint">Coordinates in {wfs.srsName}</span>
           </>
         )}
 
-        {spatialMode === "geojson" && (
+        {spatialMode === 'geojson' && (
           <>
             <div className="bbox-actions">
-              <button
-                type="button"
-                className={drawing === "polygon" ? "btn-primary" : "btn-ghost"}
-                onClick={() => onDraw("polygon")}
-              >
-                {drawing === "polygon" ? "Click, double-click to end…" : "Draw polygon"}
+              <button type="button" className={drawing === 'polygon' ? 'btn-primary' : 'btn-ghost'} onClick={() => onDraw('polygon')}>
+                {drawing === 'polygon' ? 'Click, double-click to end…' : 'Draw polygon'}
               </button>
             </div>
-            {spatial?.shape.kind === "geometry" && (
+            {spatial?.shape.kind === 'geometry' && (
               <span className="hint">
-                The shape is editable on the map: drag a node to move it, drag an edge to add
-                one, Alt-click a node to delete it
+                The shape is editable on the map: drag a node to move it, drag an edge to add one, Alt-click a node to delete it
               </span>
             )}
-            <Suspense
-              fallback={
-                <div className="xml-editor code-editor-short xml-editor-loading">
-                  Loading editor…
-                </div>
-              }
-            >
-              <CodeEditor
-                value={geoJsonText}
-                language="json"
-                onChange={(text) => applyGeoJson(text, geoJsonCrs)}
-                className="code-editor-short"
-              />
+            <Suspense fallback={<div className="xml-editor code-editor-short xml-editor-loading">Loading editor…</div>}>
+              <CodeEditor value={geoJsonText} language="json" onChange={(text) => applyGeoJson(text, geoJsonCrs)} className="code-editor-short" />
             </Suspense>
             <div className="field-row">
-              <select
-                value={geoJsonCrs}
-                onChange={(e) => applyGeoJson(geoJsonText, e.target.value)}
-                aria-label="GeoJSON coordinate reference system"
-              >
+              <select value={geoJsonCrs} onChange={(e) => applyGeoJson(geoJsonText, e.target.value)} aria-label="GeoJSON coordinate reference system">
                 <option value={GEOJSON_DEFAULT_CRS}>{GEOJSON_DEFAULT_CRS} (lon/lat)</option>
                 {/* the two coincide when the WFS itself speaks WGS84 */}
-                {wfs.srsName !== GEOJSON_DEFAULT_CRS && (
-                  <option value={wfs.srsName}>{wfs.srsName} (map units)</option>
-                )}
+                {wfs.srsName !== GEOJSON_DEFAULT_CRS && <option value={wfs.srsName}>{wfs.srsName} (map units)</option>}
               </select>
             </div>
-            <span className="hint">
-              Geometry, Feature or FeatureCollection — sent as an INTERSECTS filter
-            </span>
+            <span className="hint">Geometry, Feature or FeatureCollection — sent as an INTERSECTS filter</span>
           </>
         )}
 
@@ -517,7 +441,7 @@ export default function QueryPanel({
                   onChange={(e) =>
                     onSpatialChange({
                       ...spatial,
-                      operator: e.target.value as SpatialOperatorId
+                      operator: e.target.value as SpatialOperatorId,
                     })
                   }
                 >
@@ -529,7 +453,7 @@ export default function QueryPanel({
                 </select>
               </div>
 
-              {spatial.operator === "dwithin" && (
+              {spatial.operator === 'dwithin' && (
                 <div className="field field-value">
                   <label htmlFor="spatial-distance">Distance</label>
                   <div className="field-row">
@@ -541,7 +465,7 @@ export default function QueryPanel({
                       onChange={(e) =>
                         onSpatialChange({
                           ...spatial,
-                          distance: Math.max(0, Number(e.target.value) || 0)
+                          distance: Math.max(0, Number(e.target.value) || 0),
                         })
                       }
                     />
@@ -562,8 +486,7 @@ export default function QueryPanel({
               )}
             </div>
             <span className="hint">
-              Features whose {wfs.geometryName ?? DEFAULT_GEOMETRY_NAME}{" "}
-              {SPATIAL_OPERATORS.find((o) => o.id === spatial.operator)?.hint}
+              Features whose {wfs.geometryName ?? DEFAULT_GEOMETRY_NAME} {SPATIAL_OPERATORS.find((o) => o.id === spatial.operator)?.hint}
             </span>
           </>
         )}
@@ -585,11 +508,7 @@ export default function QueryPanel({
 
       <div className="field">
         <label htmlFor="version-select">WFS version</label>
-        <select
-          id="version-select"
-          value={wfs.version ?? "1.1.0"}
-          onChange={(e) => onVersionChange(e.target.value)}
-        >
+        <select id="version-select" value={wfs.version ?? '1.1.0'} onChange={(e) => onVersionChange(e.target.value)}>
           {WFS_VERSIONS.map((v) => (
             <option key={v} value={v}>
               {v}
@@ -613,60 +532,31 @@ export default function QueryPanel({
             </button>
           )}
         </div>
-        <code>
-          {spec ? filterPreview(spec, wfs.geometryName ?? DEFAULT_GEOMETRY_NAME) : "—"}
-        </code>
+        <code>{spec ? filterPreview(spec, wfs.geometryName ?? DEFAULT_GEOMETRY_NAME) : '—'}</code>
       </div>
 
       <div className="field col-full">
-        <button
-          type="button"
-          className="disclosure"
-          onClick={() => setShowRequest((s) => !s)}
-          aria-expanded={showRequest}
-        >
-          {showRequest ? "▾" : "▸"} GetFeature request
+        <button type="button" className="disclosure" onClick={() => setShowRequest((s) => !s)} aria-expanded={showRequest}>
+          {showRequest ? '▾' : '▸'} GetFeature request
           {editedXml !== null && <span className="badge">edited</span>}
         </button>
 
         {showRequest && (
           <>
-            <Suspense
-              fallback={
-                <div className="xml-editor xml-editor-tall xml-editor-loading">
-                  Loading editor…
-                </div>
-              }
-            >
+            <Suspense fallback={<div className="xml-editor xml-editor-tall xml-editor-loading">Loading editor…</div>}>
               {editedXml === null ? (
                 // read-only until "Edit manually" — the generated document
                 // regenerates under the reader as the fields change. The keys
                 // matter: read-only is fixed at creation, so swapping modes
                 // must swap editors.
-                <CodeEditor
-                  key="generated"
-                  value={generatedXml}
-                  language="xml"
-                  className="xml-editor-tall"
-                />
+                <CodeEditor key="generated" value={generatedXml} language="xml" className="xml-editor-tall" />
               ) : (
-                <CodeEditor
-                  key="edited"
-                  value={editedXml}
-                  language="xml"
-                  onChange={setEditedXml}
-                  className="xml-editor-tall"
-                />
+                <CodeEditor key="edited" value={editedXml} language="xml" onChange={setEditedXml} className="xml-editor-tall" />
               )}
             </Suspense>
             <div className="bbox-actions">
               {editedXml === null ? (
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  disabled={!generatedXml}
-                  onClick={() => setEditedXml(generatedXml)}
-                >
+                <button type="button" className="btn-ghost" disabled={!generatedXml} onClick={() => setEditedXml(generatedXml)}>
                   Edit manually
                 </button>
               ) : (
@@ -674,35 +564,20 @@ export default function QueryPanel({
                   Discard edits
                 </button>
               )}
-              <button
-                type="button"
-                className="btn-ghost"
-                disabled={!requestBody}
-                onClick={copyAsCurl}
-              >
-                {curlState === "copied"
-                  ? "Copied"
-                  : curlState === "failed"
-                    ? "Copy failed"
-                    : "Copy as cURL"}
+              <button type="button" className="btn-ghost" disabled={!requestBody} onClick={() => void copyAsCurl()}>
+                {curlState === 'copied' ? 'Copied' : curlState === 'failed' ? 'Copy failed' : 'Copy as cURL'}
               </button>
             </div>
             <span className="hint">
-              {editedXml === null
-                ? "Generated from the filter above"
-                : "Sent verbatim — the fields above no longer apply"}
+              {editedXml === null ? 'Generated from the filter above' : 'Sent verbatim — the fields above no longer apply'}
             </span>
           </>
         )}
       </div>
 
       <div className="actions col-full">
-        <button
-          className="btn-primary"
-          disabled={!canRun}
-          onClick={() => spec && onRun(spec, editedXml ?? undefined)}
-        >
-          {running ? "Running…" : "Run query"}
+        <button className="btn-primary" disabled={!canRun} onClick={() => spec && onRun(spec, editedXml ?? undefined)}>
+          {running ? 'Running…' : 'Run query'}
         </button>
         <button
           className="btn-ghost"
@@ -726,5 +601,5 @@ function parseExtent(text: string): Extent | null {
     .filter(Boolean)
     .map(Number);
   if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) return null;
-  return parts as Extent;
+  return parts;
 }

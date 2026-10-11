@@ -1,21 +1,33 @@
-import TileLayer from "ol/layer/Tile";
-import WMTS, { optionsFromCapabilities } from "ol/source/WMTS";
-import WMTSCapabilities from "ol/format/WMTSCapabilities";
-import OSM from "ol/source/OSM";
-import TileState from "ol/TileState";
-import type ImageTile from "ol/ImageTile";
-import type Tile from "ol/Tile";
-import { credentialHeaders, type WmtsConfig } from "../config";
+import TileLayer from 'ol/layer/Tile';
+import WMTS, { optionsFromCapabilities } from 'ol/source/WMTS';
+import WMTSCapabilities from 'ol/format/WMTSCapabilities';
+import OSM from 'ol/source/OSM';
+import TileState from 'ol/TileState';
+import type ImageTile from 'ol/ImageTile';
+import type Tile from 'ol/Tile';
+import { credentialHeaders, type WmtsConfig } from '../config';
 
 /** A layer entry as it appears in a capabilities document. */
 interface CapabilitiesLayer {
   Identifier: string;
   TileMatrixSetLink?: { TileMatrixSet: string }[];
+  ResourceURL?: { resourceType?: string; format?: string; template?: string }[];
+}
+
+interface Capabilities {
+  Contents?: {
+    Layer?: CapabilitiesLayer[];
+    TileMatrixSet?: { Identifier: string; TileMatrix?: { Identifier: string }[] }[];
+  };
+}
+
+function readCapabilities(body: string): Capabilities | null {
+  return new WMTSCapabilities().read(body) as Capabilities | null;
 }
 
 function withKey(url: string, cfg: WmtsConfig): string {
   if (!cfg.apiKey || !cfg.apiKeyParam) return url;
-  const sep = url.includes("?") ? "&" : "?";
+  const sep = url.includes('?') ? '&' : '?';
   return `${url}${sep}${cfg.apiKeyParam}=${encodeURIComponent(cfg.apiKey)}`;
 }
 
@@ -23,13 +35,13 @@ function authTileLoader(headers: Record<string, string>) {
   return (tile: Tile, src: string) => {
     const image = (tile as ImageTile).getImage() as HTMLImageElement;
     fetch(src, { headers })
-      .then((res) => {
+      .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.blob();
       })
       .then((blob) => {
         const url = URL.createObjectURL(blob);
-        image.addEventListener("load", () => URL.revokeObjectURL(url), { once: true });
+        image.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
         image.src = url;
       })
       .catch(() => tile.setState(TileState.ERROR));
@@ -43,44 +55,30 @@ export interface WmtsDescriptor {
   format: string;
 }
 
-export async function wmtsDescriptor(
-  cfg: WmtsConfig,
-  capabilitiesUrl: string,
-  layer: string
-): Promise<WmtsDescriptor | null> {
+export async function wmtsDescriptor(cfg: WmtsConfig, capabilitiesUrl: string, layer: string): Promise<WmtsDescriptor | null> {
   const headers = cfg.apiKeyParam ? {} : credentialHeaders(cfg);
   const res = await fetch(withKey(capabilitiesUrl, cfg), { headers });
   if (!res.ok) return null;
-  const caps = new WMTSCapabilities().read(await res.text());
-  const entry = (caps?.Contents?.Layer ?? []).find(
-    (l: { Identifier: string }) => l.Identifier === layer
-  );
+  const caps = readCapabilities(await res.text());
+  const entry = (caps?.Contents?.Layer ?? []).find((l) => l.Identifier === layer);
   if (!entry) return null;
 
-  const matrixSet =
-    cfg.matrixSet || entry.TileMatrixSetLink?.[0]?.TileMatrixSet;
-  const set = (caps.Contents.TileMatrixSet ?? []).find(
-    (m: { Identifier: string }) => m.Identifier === matrixSet
-  );
-  const resource = (entry.ResourceURL ?? []).find(
-    (r: { resourceType?: string; format?: string }) =>
-      r.resourceType === "tile" && (!cfg.format || r.format === cfg.format)
-  );
-  if (!set || !resource) return null;
+  const matrixSet = cfg.matrixSet || entry.TileMatrixSetLink?.[0]?.TileMatrixSet;
+  if (!matrixSet) return null;
+  const set = (caps?.Contents?.TileMatrixSet ?? []).find((m) => m.Identifier === matrixSet);
+  const resource = (entry.ResourceURL ?? []).find((r) => r.resourceType === 'tile' && (!cfg.format || r.format === cfg.format));
+  if (!set || !resource?.template) return null;
 
   return {
-    template: withKey(
-      String(resource.template).replace("{TileMatrixSet}", matrixSet),
-      cfg
-    ),
+    template: withKey(resource.template.replace('{TileMatrixSet}', matrixSet), cfg),
     matrixSet,
-    labels: (set.TileMatrix ?? []).map((m: { Identifier: string }) => m.Identifier),
-    format: resource.format ?? cfg.format ?? "image/jpeg"
+    labels: (set.TileMatrix ?? []).map((m) => m.Identifier),
+    format: resource.format ?? cfg.format ?? 'image/jpeg',
   };
 }
 
 /** The layer's own first matrix set, so it does not have to be configured. */
-function matrixSetFor(caps: { Contents?: { Layer?: CapabilitiesLayer[] } }, layer: string) {
+function matrixSetFor(caps: Capabilities, layer: string) {
   const entry = (caps.Contents?.Layer ?? []).find((l) => l.Identifier === layer);
   return entry?.TileMatrixSetLink?.[0]?.TileMatrixSet;
 }
@@ -111,11 +109,7 @@ export async function createBaseLayer(cfg: WmtsConfig): Promise<TileLayer | null
  * is fetched and handed on as a blob; with apiKeyParam it rides in the query
  * string and loads straight into the <img>.
  */
-export async function createWmtsLayer(
-  cfg: WmtsConfig,
-  capabilitiesUrl: string,
-  layer: string
-): Promise<TileLayer> {
+export async function createWmtsLayer(cfg: WmtsConfig, capabilitiesUrl: string, layer: string): Promise<TileLayer> {
   const url = withKey(capabilitiesUrl, cfg);
   const headers = cfg.apiKeyParam ? {} : credentialHeaders(cfg);
   const res = await fetch(url, { headers });
@@ -124,7 +118,7 @@ export async function createWmtsLayer(
   }
 
   const body = await res.text();
-  const caps = new WMTSCapabilities().read(body);
+  const caps = readCapabilities(body);
 
   // A 200 that is not a capabilities document is the common case: an error
   // page, or this app's own index.html when the URL is a path nginx does not
@@ -143,13 +137,11 @@ export async function createWmtsLayer(
     layer,
     matrixSet: cfg.matrixSet || matrixSetFor(caps, layer),
     style: cfg.style || undefined,
-    format: cfg.format || undefined
+    format: cfg.format || undefined,
   });
   if (!options) {
-    const available = (caps.Contents.Layer as CapabilitiesLayer[]).map((l) => l.Identifier);
-    throw new Error(
-      `WMTS layer "${layer}" not found at ${url}. Available: ${available.join(", ")}`
-    );
+    const available = caps.Contents.Layer.map((l) => l.Identifier);
+    throw new Error(`WMTS layer "${layer}" not found at ${url}. Available: ${available.join(', ')}`);
   }
 
   const hasHeader = Object.keys(headers).length > 0;
@@ -157,8 +149,8 @@ export async function createWmtsLayer(
     source: new WMTS({
       ...options,
       urls: (options.urls ?? []).map((u) => withKey(u, cfg)),
-      crossOrigin: "anonymous",
-      ...(hasHeader ? { tileLoadFunction: authTileLoader(headers) } : {})
-    })
+      crossOrigin: 'anonymous',
+      ...(hasHeader ? { tileLoadFunction: authTileLoader(headers) } : {}),
+    }),
   });
 }

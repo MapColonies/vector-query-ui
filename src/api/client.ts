@@ -1,9 +1,9 @@
-import { credentialHeaders } from "../config";
-import type { LayerDetail, LayersResponse } from "./types";
+import { credentialHeaders } from '../config';
+import type { LayerDetail, LayersResponse } from './types';
 
 export interface LayersApiLike {
-  listLayers(signal?: AbortSignal): Promise<LayersResponse>;
-  getLayer(layerName: string, signal?: AbortSignal): Promise<LayerDetail>;
+  listLayers: (signal?: AbortSignal) => Promise<LayersResponse>;
+  getLayer: (layerName: string, signal?: AbortSignal) => Promise<LayerDetail>;
 }
 
 /**
@@ -12,28 +12,28 @@ export interface LayersApiLike {
  * "/api/v2/metadata", …) is part of the configured URL, not hardcoded here.
  */
 export class LayersApi implements LayersApiLike {
-  constructor(
+  public constructor(
     private readonly baseUrl: string,
     private readonly credential?: { apiKey?: string; apiKeyHeader?: string }
   ) {}
 
-  private url(path = ""): string {
-    return `${this.baseUrl.replace(/\/$/, "")}${path}`;
+  private url(path = ''): string {
+    return `${this.baseUrl.replace(/\/$/, '')}${path}`;
   }
 
-  async listLayers(signal?: AbortSignal): Promise<LayersResponse> {
+  public async listLayers(signal?: AbortSignal): Promise<LayersResponse> {
     const res = await fetch(this.url(), {
       signal,
-      headers: credentialHeaders(this.credential)
+      headers: credentialHeaders(this.credential),
     });
     if (!res.ok) throw new Error(`GET ${this.url()} failed (HTTP ${res.status})`);
     return (await res.json()) as LayersResponse;
   }
 
-  async getLayer(layerName: string, signal?: AbortSignal): Promise<LayerDetail> {
+  public async getLayer(layerName: string, signal?: AbortSignal): Promise<LayerDetail> {
     const res = await fetch(this.url(`/${encodeURIComponent(layerName)}`), {
       signal,
-      headers: credentialHeaders(this.credential)
+      headers: credentialHeaders(this.credential),
     });
     if (!res.ok) {
       throw new Error(`GET ${this.url(`/${layerName}`)} failed (HTTP ${res.status})`);

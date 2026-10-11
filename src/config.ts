@@ -1,4 +1,4 @@
-import defaults from "../config/default.json";
+import defaults from '../config/default.json';
 
 export interface ApiConfig {
   baseUrl: string;
@@ -102,7 +102,7 @@ export interface HistoryConfig {
 
 export interface UiConfig {
   title: string;
-  direction: "rtl" | "ltr";
+  direction: 'rtl' | 'ltr';
   /** Text of the warning banner on the map's corner; empty hides it. */
   disclaimer?: string;
 }
@@ -128,8 +128,7 @@ export interface AppConfig {
 export const defaultConfig = defaults as unknown as AppConfig;
 
 type Json = Record<string, unknown>;
-const isObject = (v: unknown): v is Json =>
-  typeof v === "object" && v !== null && !Array.isArray(v);
+const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Objects merge key by key; arrays and scalars are replaced wholesale. */
 function deepMerge<T>(base: T, override: unknown): T {
@@ -164,10 +163,7 @@ export function loadConfig(): AppConfig {
  * The key header for an upstream, when one reached the page. Empty unless
  * `direct` is on — otherwise the build strips keys and the proxy adds them.
  */
-export function credentialHeaders(source?: {
-  apiKey?: string;
-  apiKeyHeader?: string;
-}): Record<string, string> {
+export function credentialHeaders(source?: { apiKey?: string; apiKeyHeader?: string }): Record<string, string> {
   if (!source?.apiKey) return {};
-  return { [source.apiKeyHeader || "x-api-key"]: source.apiKey };
+  return { [source.apiKeyHeader || 'x-api-key']: source.apiKey };
 }

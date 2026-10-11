@@ -31,10 +31,7 @@
   },
   "map": {
     "projection": "EPSG:4326",
-    "center": [
-      0,
-      0
-    ],
+    "center": [0, 0],
     "zoom": 2,
     "customProjections": {}
   },
@@ -48,10 +45,7 @@
     "versionedSuffix": "_versioned",
     "validFromProperty": "valid_from",
     "validToProperty": "valid_to",
-    "identityProperties": [
-      "gfid",
-      "osm_id"
-    ]
+    "identityProperties": ["gfid", "osm_id"]
   },
   "threeD": {
     "enabled": true

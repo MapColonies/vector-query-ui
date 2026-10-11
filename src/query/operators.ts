@@ -1,6 +1,6 @@
-import type { LayerProperty } from "../api/types";
+import type { LayerProperty } from '../api/types';
 
-export type OperatorId = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "like";
+export type OperatorId = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like';
 
 export interface OperatorDef {
   id: OperatorId;
@@ -8,13 +8,13 @@ export interface OperatorDef {
   label: string;
 }
 
-const EQ: OperatorDef = { id: "eq", symbol: "=", label: "equals" };
-const NEQ: OperatorDef = { id: "neq", symbol: "≠", label: "not equal" };
-const GT: OperatorDef = { id: "gt", symbol: ">", label: "greater than" };
-const GTE: OperatorDef = { id: "gte", symbol: "≥", label: "greater or equal" };
-const LT: OperatorDef = { id: "lt", symbol: "<", label: "less than" };
-const LTE: OperatorDef = { id: "lte", symbol: "≤", label: "less or equal" };
-const LIKE: OperatorDef = { id: "like", symbol: "~", label: "contains" };
+const EQ: OperatorDef = { id: 'eq', symbol: '=', label: 'equals' };
+const NEQ: OperatorDef = { id: 'neq', symbol: '≠', label: 'not equal' };
+const GT: OperatorDef = { id: 'gt', symbol: '>', label: 'greater than' };
+const GTE: OperatorDef = { id: 'gte', symbol: '≥', label: 'greater or equal' };
+const LT: OperatorDef = { id: 'lt', symbol: '<', label: 'less than' };
+const LTE: OperatorDef = { id: 'lte', symbol: '≤', label: 'less or equal' };
+const LIKE: OperatorDef = { id: 'like', symbol: '~', label: 'contains' };
 
 export function isNumericType(type: string): boolean {
   return /xsd:(long|int|integer|short|byte|double|float|decimal)/.test(type);
@@ -31,13 +31,7 @@ export function operatorsFor(p: LayerProperty): OperatorDef[] {
 }
 
 /** The OGC spatial predicates OpenLayers can encode. */
-export type SpatialOperatorId =
-  | "bbox"
-  | "intersects"
-  | "within"
-  | "contains"
-  | "disjoint"
-  | "dwithin";
+export type SpatialOperatorId = 'bbox' | 'intersects' | 'within' | 'contains' | 'disjoint' | 'dwithin';
 
 export interface SpatialOperatorDef {
   id: SpatialOperatorId;
@@ -47,17 +41,17 @@ export interface SpatialOperatorDef {
 }
 
 export const SPATIAL_OPERATORS: SpatialOperatorDef[] = [
-  { id: "bbox", label: "BBOX", hint: "overlaps the box — the cheapest test" },
-  { id: "intersects", label: "Intersects", hint: "touches or overlaps the shape anywhere" },
-  { id: "within", label: "Within", hint: "lies entirely inside the shape" },
-  { id: "contains", label: "Contains", hint: "encloses the shape entirely" },
-  { id: "disjoint", label: "Disjoint", hint: "does not touch the shape at all" },
-  { id: "dwithin", label: "DWithin", hint: "lies within a distance of the shape" }
+  { id: 'bbox', label: 'BBOX', hint: 'overlaps the box — the cheapest test' },
+  { id: 'intersects', label: 'Intersects', hint: 'touches or overlaps the shape anywhere' },
+  { id: 'within', label: 'Within', hint: 'lies entirely inside the shape' },
+  { id: 'contains', label: 'Contains', hint: 'encloses the shape entirely' },
+  { id: 'disjoint', label: 'Disjoint', hint: 'does not touch the shape at all' },
+  { id: 'dwithin', label: 'DWithin', hint: 'lies within a distance of the shape' },
 ];
 
 /** BBOX takes an envelope, so it is only offered for a bounding box. */
-export function spatialOperatorsFor(kind: "bbox" | "geometry"): SpatialOperatorDef[] {
-  return kind === "bbox" ? SPATIAL_OPERATORS : SPATIAL_OPERATORS.filter((o) => o.id !== "bbox");
+export function spatialOperatorsFor(kind: 'bbox' | 'geometry'): SpatialOperatorDef[] {
+  return kind === 'bbox' ? SPATIAL_OPERATORS : SPATIAL_OPERATORS.filter((o) => o.id !== 'bbox');
 }
 
-export const DISTANCE_UNITS = ["m", "km", "mi", "ft"];
+export const DISTANCE_UNITS = ['m', 'km', 'mi', 'ft'];

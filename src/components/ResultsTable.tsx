@@ -1,39 +1,32 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import type Feature from "ol/Feature";
-import type Geometry from "ol/geom/Geometry";
-import { propertyLabel, type LayerProperty } from "../api/types";
-import { featureToGeoJson } from "../query/geojson";
-import CopyButton from "./CopyButton";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import type Feature from 'ol/Feature';
+import { propertyLabel, type LayerProperty } from '../api/types';
+import { featureToGeoJson } from '../query/geojson';
+import CopyButton from './CopyButton';
 
 // Monaco is heavy — fetched the first time a feature is actually inspected.
 // Its folding gutter is what makes the document's {} and [] collapsible.
-const CodeEditor = lazy(() => import("./CodeEditor"));
+const CodeEditor = lazy(async () => import('./CodeEditor'));
 
 interface Props {
-  features: Feature<Geometry>[];
+  features: Feature[];
   properties: LayerProperty[];
-  selected: Feature<Geometry> | null;
+  selected: Feature | null;
   /** Projection the features are in — needed to write WGS84 GeoJSON. */
   featureProjection: string;
-  onSelect: (f: Feature<Geometry>) => void;
+  onSelect: (f: Feature) => void;
 }
 
 const MAX_COLUMNS = 4;
 
-export default function ResultsTable({
-  features,
-  properties,
-  selected,
-  featureProjection,
-  onSelect
-}: Props) {
+export default function ResultsTable({ features, properties, selected, featureProjection, onSelect }: Props) {
   // Prefer columns that actually carry data, name-like fields first.
   const columns = useMemo(() => {
-    const nonGeom = properties.filter((p) => !p.type.startsWith("gml:"));
+    const nonGeom = properties.filter((p) => !p.type.startsWith('gml:'));
     const scored = nonGeom.map((p) => {
       const filled = features.filter((f) => {
-        const v = f.get(p.property);
-        return v !== undefined && v !== null && v !== "";
+        const v: unknown = f.get(p.property);
+        return v !== undefined && v !== null && v !== '';
       }).length;
       const nameBoost = /name|alias|title|label/i.test(p.property) ? features.length : 0;
       return { p, score: filled + nameBoost };
@@ -44,15 +37,12 @@ export default function ResultsTable({
       .map((s) => s.p);
   }, [features, properties]);
 
-  const selectedGeoJson = useMemo(
-    () => (selected ? featureToGeoJson(selected, featureProjection) : ""),
-    [selected, featureProjection]
-  );
+  const selectedGeoJson = useMemo(() => (selected ? featureToGeoJson(selected, featureProjection) : ''), [selected, featureProjection]);
 
   // a feature picked on the map may be far down the list
   const selectedRowRef = useRef<HTMLTableRowElement>(null);
   useEffect(() => {
-    selectedRowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    selectedRowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [selected]);
 
   const [open, setOpen] = useState(true);
@@ -69,7 +59,7 @@ export default function ResultsTable({
   return (
     <section className="results">
       <button className="exchange-toggle" onClick={() => setOpen((o) => !o)}>
-        <span>{open ? "▾" : "▸"} Results</span>
+        <span>{open ? '▾' : '▸'} Results</span>
         <span className="results-count mono">{features.length}</span>
       </button>
 
@@ -89,16 +79,12 @@ export default function ResultsTable({
                   <tr
                     key={f.getId() ?? i}
                     ref={f === selected ? selectedRowRef : undefined}
-                    className={f === selected ? "row-selected" : ""}
+                    className={f === selected ? 'row-selected' : ''}
                     onClick={() => onSelect(f)}
                   >
                     {columns.map((c) => {
-                      const v = f.get(c.property);
-                      return (
-                        <td key={c.property}>
-                          {v === undefined || v === null ? "—" : String(v)}
-                        </td>
-                      );
+                      const v: unknown = f.get(c.property);
+                      return <td key={c.property}>{v === undefined || v === null ? '—' : String(v)}</td>;
                     })}
                   </tr>
                 ))}
@@ -112,27 +98,14 @@ export default function ResultsTable({
           {selected && (
             <div className="results-detail">
               <div className="results-detail-header">
-                <button
-                  className="exchange-toggle"
-                  onClick={() => setDetailOpen((o) => !o)}
-                >
-                  <span>{detailOpen ? "▾" : "▸"} Selected feature</span>
+                <button className="exchange-toggle" onClick={() => setDetailOpen((o) => !o)}>
+                  <span>{detailOpen ? '▾' : '▸'} Selected feature</span>
                 </button>
                 <CopyButton text={selectedGeoJson} className="btn-ghost btn-inline" />
               </div>
               {detailOpen && (
-                <Suspense
-                  fallback={
-                    <div className="xml-editor code-editor-detail xml-editor-loading">
-                      Loading editor…
-                    </div>
-                  }
-                >
-                  <CodeEditor
-                    value={selectedGeoJson}
-                    language="json"
-                    className="code-editor-detail"
-                  />
+                <Suspense fallback={<div className="xml-editor code-editor-detail xml-editor-loading">Loading editor…</div>}>
+                  <CodeEditor value={selectedGeoJson} language="json" className="code-editor-detail" />
                 </Suspense>
               )}
             </div>

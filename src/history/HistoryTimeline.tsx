@@ -1,43 +1,42 @@
-import { useEffect, useMemo, useState } from "react";
-import type Feature from "ol/Feature";
-import type Geometry from "ol/geom/Geometry";
-import type { HistoryConfig, WfsConfig } from "../config";
-import { propertyLabel, type LayerProperty } from "../api/types";
-import { buildGetFeatureXml, executeQuery } from "../query/wfs";
+import { useEffect, useMemo, useState } from 'react';
+import type Feature from 'ol/Feature';
+import type { HistoryConfig, WfsConfig } from '../config';
+import { propertyLabel, type LayerProperty } from '../api/types';
+import { buildGetFeatureXml, executeQuery } from '../query/wfs';
 
 interface Props {
   wfs: WfsConfig;
   history: HistoryConfig;
   layerName: string;
-  feature: Feature<Geometry> | null;
+  feature: Feature | null;
   properties: LayerProperty[];
-  onShowVersion: (feature: Feature<Geometry> | null) => void;
+  onShowVersion: (feature: Feature | null) => void;
 }
 
 interface Version {
-  feature: Feature<Geometry>;
+  feature: Feature;
   from: string;
   to: string | null;
   changed: string[];
 }
 
 function formatInstant(value: string | null): string {
-  if (!value) return "—";
+  if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleString(undefined, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
 function formatSpan(from: string, to: string | null): string {
   const start = new Date(from).getTime();
   const end = to ? new Date(to).getTime() : Date.now();
-  if (Number.isNaN(start) || Number.isNaN(end)) return "";
+  if (Number.isNaN(start) || Number.isNaN(end)) return '';
   const minutes = Math.max(0, Math.round((end - start) / 60000));
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.round(minutes / 60);
@@ -45,14 +44,7 @@ function formatSpan(from: string, to: string | null): string {
   return `${Math.round(hours / 24)}d`;
 }
 
-export default function HistoryTimeline({
-  wfs,
-  history,
-  layerName,
-  feature,
-  properties,
-  onShowVersion
-}: Props) {
+export default function HistoryTimeline({ wfs, history, layerName, feature, properties, onShowVersion }: Props) {
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,10 +54,10 @@ export default function HistoryTimeline({
   const identity = useMemo(() => {
     if (!feature) return null;
     for (const name of history.identityProperties) {
-      const value = feature.get(name);
-      if (value !== undefined && value !== null && value !== "") {
+      const value: unknown = feature.get(name);
+      if (value !== undefined && value !== null && value !== '') {
         const known = properties.find((p) => p.property === name);
-        return { property: known ?? { property: name, type: "xsd:string" }, value };
+        return { property: known ?? { property: name, type: 'xsd:string' }, value };
       }
     }
     return null;
@@ -74,7 +66,7 @@ export default function HistoryTimeline({
   const comparable = useMemo(
     () =>
       properties
-        .filter((p) => !p.type.startsWith("gml:"))
+        .filter((p) => !p.type.startsWith('gml:'))
         .map((p) => p.property)
         .filter((p) => p !== history.validFromProperty && p !== history.validToProperty),
     [properties, history.validFromProperty, history.validToProperty]
@@ -87,9 +79,7 @@ export default function HistoryTimeline({
     onShowVersion(null);
     if (!feature || !identity) return;
 
-    const versionedLayer = layerName.endsWith(history.versionedSuffix)
-      ? layerName
-      : `${layerName}${history.versionedSuffix}`;
+    const versionedLayer = layerName.endsWith(history.versionedSuffix) ? layerName : `${layerName}${history.versionedSuffix}`;
 
     const controller = new AbortController();
     setLoading(true);
@@ -97,29 +87,23 @@ export default function HistoryTimeline({
     const xml = buildGetFeatureXml(wfs, {
       layerName: versionedLayer,
       property: identity.property,
-      operator: "eq",
+      operator: 'eq',
       value: String(identity.value),
-      maxFeatures: 200
+      maxFeatures: 200,
     });
 
     executeQuery(wfs, xml, controller.signal)
       .then(({ features }) => {
         const ordered = [...features].sort((a, b) =>
-          String(a.get(history.validFromProperty) ?? "").localeCompare(
-            String(b.get(history.validFromProperty) ?? "")
-          )
+          String(a.get(history.validFromProperty) ?? '').localeCompare(String(b.get(history.validFromProperty) ?? ''))
         );
         const rows: Version[] = ordered.map((f, i) => {
           const previous = i > 0 ? ordered[i - 1] : null;
           return {
             feature: f,
-            from: String(f.get(history.validFromProperty) ?? ""),
+            from: String(f.get(history.validFromProperty) ?? ''),
             to: (f.get(history.validToProperty) as string | null) ?? null,
-            changed: previous
-              ? comparable.filter(
-                  (p) => String(f.get(p) ?? "") !== String(previous.get(p) ?? "")
-                )
-              : []
+            changed: previous ? comparable.filter((p) => String(f.get(p) ?? '') !== String(previous.get(p) ?? '')) : [],
           };
         });
         rows.reverse(); // newest first
@@ -153,15 +137,12 @@ export default function HistoryTimeline({
 
       {!identity && (
         <div className="history-empty">
-          No identity column on this feature — looked for{" "}
-          <span className="mono">{history.identityProperties.join(", ")}</span>
+          No identity column on this feature — looked for <span className="mono">{history.identityProperties.join(', ')}</span>
         </div>
       )}
       {loading && <div className="history-empty">Loading versions…</div>}
       {error && <div className="history-empty history-error">{error}</div>}
-      {!loading && !error && identity && versions.length === 0 && (
-        <div className="history-empty">No versions found</div>
-      )}
+      {!loading && !error && identity && versions.length === 0 && <div className="history-empty">No versions found</div>}
 
       <ol className="timeline">
         {versions.map((v, i) => {
@@ -170,13 +151,7 @@ export default function HistoryTimeline({
           return (
             <li
               key={`${v.from}-${i}`}
-              className={[
-                "timeline-item",
-                isCurrent ? "is-current" : "",
-                isActive ? "is-active" : ""
-              ]
-                .filter(Boolean)
-                .join(" ")}
+              className={['timeline-item', isCurrent ? 'is-current' : '', isActive ? 'is-active' : ''].filter(Boolean).join(' ')}
               onClick={() => {
                 const next = isActive ? null : i;
                 setActiveIndex(next);
@@ -186,13 +161,10 @@ export default function HistoryTimeline({
               <span className="timeline-dot" aria-hidden="true" />
               <div className="timeline-body">
                 <div className="timeline-range mono" dir="ltr">
-                  {formatInstant(v.from)} <span className="timeline-arrow">→</span>{" "}
-                  {v.to ? formatInstant(v.to) : "now"}
+                  {formatInstant(v.from)} <span className="timeline-arrow">→</span> {v.to ? formatInstant(v.to) : 'now'}
                 </div>
                 <div className="timeline-meta">
-                  <span className={`badge${isCurrent ? " badge-current" : ""}`}>
-                    {isCurrent ? "current" : `v${versions.length - i}`}
-                  </span>
+                  <span className={`badge${isCurrent ? ' badge-current' : ''}`}>{isCurrent ? 'current' : `v${versions.length - i}`}</span>
                   <span className="timeline-span">{formatSpan(v.from, v.to)}</span>
                 </div>
                 {v.changed.length > 0 && (
@@ -205,9 +177,7 @@ export default function HistoryTimeline({
                         </span>
                       );
                     })}
-                    {v.changed.length > 6 && (
-                      <span className="chip chip-more">+{v.changed.length - 6}</span>
-                    )}
+                    {v.changed.length > 6 && <span className="chip chip-more">+{v.changed.length - 6}</span>}
                   </div>
                 )}
               </div>

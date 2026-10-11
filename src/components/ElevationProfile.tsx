@@ -1,9 +1,8 @@
-import { useMemo } from "react";
-import type Feature from "ol/Feature";
-import type Geometry from "ol/geom/Geometry";
+import { useMemo } from 'react';
+import type Feature from 'ol/Feature';
 
 interface Props {
-  feature: Feature<Geometry> | null;
+  feature: Feature | null;
 }
 
 interface Elevation {
@@ -16,7 +15,7 @@ interface Elevation {
 /** Flattens any nesting of coordinates down to the individual positions. */
 function positions(input: unknown): number[][] {
   if (!Array.isArray(input) || input.length === 0) return [];
-  if (typeof input[0] === "number") return [input as number[]];
+  if (typeof input[0] === 'number') return [input as number[]];
   return (input as unknown[]).flatMap(positions);
 }
 
@@ -25,17 +24,17 @@ function positions(input: unknown): number[][] {
  * Found by looking rather than by name: the column is declared in the layer's
  * own Lua, so nothing here should have to know it is called geom3d.
  */
-function findElevation(feature: Feature<Geometry> | null): Elevation | null {
+function findElevation(feature: Feature | null): Elevation | null {
   if (!feature) return null;
 
   for (const [property, value] of Object.entries(feature.getProperties())) {
     const geometry = value as { getCoordinates?: () => unknown } | null;
-    if (!geometry || typeof geometry.getCoordinates !== "function") continue;
+    if (!geometry || typeof geometry.getCoordinates !== 'function') continue;
 
     const coords = positions(geometry.getCoordinates());
     if (coords.length === 0 || coords.some((c) => c.length < 3)) continue;
 
-    const values = coords.map((c) => c[2] as number).filter((z) => Number.isFinite(z));
+    const values = coords.map((c) => c[2]).filter((z) => Number.isFinite(z));
     if (values.length === 0) continue;
 
     return { property, values, min: Math.min(...values), max: Math.max(...values) };
@@ -60,7 +59,7 @@ export default function ElevationProfile({ feature }: Props) {
       const y = span === 0 ? height / 2 : height - ((z - min) / span) * height;
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
-    .join(" ");
+    .join(' ');
 
   return (
     <section className="elevation">
@@ -82,10 +81,22 @@ export default function ElevationProfile({ feature }: Props) {
       </svg>
 
       <dl className="elevation-stats">
-        <div><dt>min</dt><dd className="mono">{min.toFixed(2)} m</dd></div>
-        <div><dt>max</dt><dd className="mono">{max.toFixed(2)} m</dd></div>
-        <div><dt>range</dt><dd className="mono">{span.toFixed(2)} m</dd></div>
-        <div><dt>vertices</dt><dd className="mono">{values.length}</dd></div>
+        <div>
+          <dt>min</dt>
+          <dd className="mono">{min.toFixed(2)} m</dd>
+        </div>
+        <div>
+          <dt>max</dt>
+          <dd className="mono">{max.toFixed(2)} m</dd>
+        </div>
+        <div>
+          <dt>range</dt>
+          <dd className="mono">{span.toFixed(2)} m</dd>
+        </div>
+        <div>
+          <dt>vertices</dt>
+          <dd className="mono">{values.length}</dd>
+        </div>
       </dl>
     </section>
   );

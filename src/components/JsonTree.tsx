@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode } from 'react';
 
 interface Props {
   /** JSON text. Anything unparseable is shown as-is. */
@@ -19,19 +19,19 @@ export default function JsonTree({ code, className }: Props) {
   }
 
   return (
-    <div className={`code-view json-tree mono${className ? ` ${className}` : ""}`} dir="ltr">
+    <div className={`code-view json-tree mono${className ? ` ${className}` : ''}`} dir="ltr">
       {value === undefined ? code : <JsonNode value={value} />}
     </div>
   );
 }
 
-const isPrimitive = (v: unknown) => v === null || typeof v !== "object";
+const isPrimitive = (v: unknown) => v === null || typeof v !== 'object';
 
 function Leaf({ value }: { value: unknown }) {
-  if (value === null || typeof value === "boolean") {
+  if (value === null || typeof value === 'boolean') {
     return <span className="tok-bool">{String(value)}</span>;
   }
-  if (typeof value === "number") return <span className="tok-num">{String(value)}</span>;
+  if (typeof value === 'number') return <span className="tok-num">{String(value)}</span>;
   return <span className="tok-str">{JSON.stringify(value)}</span>;
 }
 
@@ -45,9 +45,7 @@ function JsonNode({ value, trailing }: { value: unknown; trailing?: ReactNode })
     );
   }
   const isArray = Array.isArray(value);
-  const entries = isArray
-    ? (value as unknown[]).map((v, i) => [i, v] as const)
-    : Object.entries(value as Record<string, unknown>);
+  const entries = isArray ? (value as unknown[]).map((v, i) => [i, v] as const) : Object.entries(value as Record<string, unknown>);
 
   // A flat array of primitives — a coordinate pair, a list of ids — reads
   // better on one line than as one line per number.
@@ -67,23 +65,16 @@ function JsonNode({ value, trailing }: { value: unknown; trailing?: ReactNode })
     );
   }
 
-  return (
-    <Container
-      brackets={isArray ? "[]" : "{}"}
-      keyed={!isArray}
-      entries={entries}
-      trailing={trailing}
-    />
-  );
+  return <Container brackets={isArray ? '[]' : '{}'} keyed={!isArray} entries={entries} trailing={trailing} />;
 }
 
 function Container({
   brackets,
   keyed,
   entries,
-  trailing
+  trailing,
 }: {
-  brackets: "{}" | "[]";
+  brackets: '{}' | '[]';
   keyed: boolean;
   entries: readonly (readonly [string | number, unknown])[];
   trailing?: ReactNode;
@@ -103,17 +94,12 @@ function Container({
   if (collapsed) {
     return (
       <span>
-        <button
-          type="button"
-          className="json-toggle"
-          aria-label="Expand"
-          onClick={() => setCollapsed(false)}
-        >
+        <button type="button" className="json-toggle" aria-label="Expand" onClick={() => setCollapsed(false)}>
           ▸
         </button>
         <span className="tok-punc">{open}</span>
         <button type="button" className="json-ellipsis" onClick={() => setCollapsed(false)}>
-          … {entries.length} {keyed ? (entries.length === 1 ? "key" : "keys") : "items"} …
+          … {entries.length} {keyed ? (entries.length === 1 ? 'key' : 'keys') : 'items'} …
         </button>
         <span className="tok-punc">{close}</span>
         {trailing}
@@ -123,12 +109,7 @@ function Container({
 
   return (
     <span>
-      <button
-        type="button"
-        className="json-toggle"
-        aria-label="Collapse"
-        onClick={() => setCollapsed(true)}
-      >
+      <button type="button" className="json-toggle" aria-label="Collapse" onClick={() => setCollapsed(true)}>
         ▾
       </button>
       <span className="tok-punc">{open}</span>
@@ -140,10 +121,7 @@ function Container({
               <span className="tok-punc">: </span>
             </>
           )}
-          <JsonNode
-            value={v}
-            trailing={i < entries.length - 1 ? <span className="tok-punc">,</span> : undefined}
-          />
+          <JsonNode value={v} trailing={i < entries.length - 1 ? <span className="tok-punc">,</span> : undefined} />
         </div>
       ))}
       <span className="tok-punc">{close}</span>

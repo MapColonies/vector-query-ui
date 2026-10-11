@@ -39,10 +39,10 @@ const getRecordsBody = (startPosition: number) => `<?xml version="1.0" encoding=
 /** Namespaced or not, depending on how the catalog serializes. */
 function firstText(record: Element, names: string[]): string {
   for (const name of names) {
-    const value = record.getElementsByTagName(name)[0]?.textContent?.trim();
+    const value = record.getElementsByTagName(name).item(0)?.textContent.trim();
     if (value) return value;
   }
-  return "";
+  return '';
 }
 
 function elements(record: Element, names: string[]): Element[] {
@@ -54,43 +54,41 @@ function elements(record: Element, names: string[]): Element[] {
 }
 
 function parseRecords(doc: Document): CswRecord[] {
-  const nodes = elements(doc.documentElement, ["mc:MCRasterRecord", "MCRasterRecord"]);
+  const nodes = elements(doc.documentElement, ['mc:MCRasterRecord', 'MCRasterRecord']);
   return nodes.flatMap((record) => {
-    const id = firstText(record, ["mc:productId", "productId"]);
+    const id = firstText(record, ['mc:productId', 'productId']);
     if (!id) return [];
-    const links = elements(record, ["mc:links", "links"]);
-    const wmtsLink =
-      links.find((l) => l.getAttribute("scheme") === "WMTS") ??
-      links.find((l) => l.getAttribute("scheme") === "WMTS_KVP");
-    const capabilitiesUrl = wmtsLink?.textContent?.trim().replace(/^['"]+|['"]+$/g, "") ?? "";
+    const links = elements(record, ['mc:links', 'links']);
+    const wmtsLink = links.find((l) => l.getAttribute('scheme') === 'WMTS') ?? links.find((l) => l.getAttribute('scheme') === 'WMTS_KVP');
+    const capabilitiesUrl = wmtsLink?.textContent.trim().replace(/^['"]+|['"]+$/g, '') ?? '';
     if (!capabilitiesUrl) return [];
     return [
       {
         id,
-        title: firstText(record, ["mc:productName", "productName"]) || id,
+        title: firstText(record, ['mc:productName', 'productName']) || id,
         capabilitiesUrl,
-        layerId: wmtsLink?.getAttribute("name") || id
-      }
+        layerId: wmtsLink?.getAttribute('name') || id,
+      },
     ];
   });
 }
 
 export async function fetchCswRecords(cswUrl: string, signal?: AbortSignal): Promise<CswRecord[]> {
   const res = await fetch(cswUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/xml" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/xml' },
     body: getRecordsBody(1),
-    signal
+    signal,
   });
   if (!res.ok) throw new Error(`CSW GetRecords failed (HTTP ${res.status})`);
 
   const text = await res.text();
-  const doc = new DOMParser().parseFromString(text, "text/xml");
-  if (doc.querySelector("parsererror")) {
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  if (doc.querySelector('parsererror')) {
     throw new Error(`${cswUrl} did not return a CSW document`);
   }
 
-  const exception = doc.querySelector("ExceptionText, ServiceException")?.textContent?.trim();
+  const exception = doc.querySelector('ExceptionText, ServiceException')?.textContent.trim();
   if (exception) throw new Error(`CSW: ${exception}`);
 
   // One page is plenty for finding the configured base maps; a deployment

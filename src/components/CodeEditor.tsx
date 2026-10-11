@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
-import * as monaco from "monaco-editor";
-import EditorWorker from "monaco-editor/editor/editor.worker.js?worker";
-import JsonWorker from "monaco-editor/language/json/json.worker.js?worker";
+import { useEffect, useRef } from 'react';
+import * as monaco from 'monaco-editor';
+import EditorWorker from 'monaco-editor/editor/editor.worker.js?worker';
+import JsonWorker from 'monaco-editor/language/json/json.worker.js?worker';
 
 // Monaco resolves its workers through this global. The `?worker` imports make
 // vite bundle each one as a same-origin chunk, so the editor is fully offline
@@ -9,13 +9,12 @@ import JsonWorker from "monaco-editor/language/json/json.worker.js?worker";
 // disconnected networks. JSON gets its own language worker (validation,
 // folding); XML has no language service, so the base editor worker covers it.
 self.MonacoEnvironment = {
-  getWorker: (_workerId: string, label: string) =>
-    label === "json" ? new JsonWorker() : new EditorWorker()
+  getWorker: (_workerId: string, label: string) => (label === 'json' ? new JsonWorker() : new EditorWorker()),
 };
 
 interface Props {
   value: string;
-  language: "xml" | "json";
+  language: 'xml' | 'json';
   /** Omit for a read-only viewer. */
   onChange?: (value: string) => void;
   className?: string;
@@ -36,16 +35,16 @@ export default function CodeEditor({ value, language, onChange, className }: Pro
     const editor = monaco.editor.create(hostRef.current, {
       value,
       language,
-      theme: "vs-dark",
+      theme: 'vs-dark',
       readOnly: !onChange,
       domReadOnly: !onChange,
       automaticLayout: true,
       minimap: { enabled: false },
-      wordWrap: "on",
+      wordWrap: 'on',
       fontSize: 12,
       tabSize: 2,
       scrollBeyondLastLine: false,
-      fixedOverflowWidgets: true
+      fixedOverflowWidgets: true,
     });
     editor.onDidChangeModelContent(() => onChangeRef.current?.(editor.getValue()));
     editorRef.current = editor;
@@ -64,7 +63,5 @@ export default function CodeEditor({ value, language, onChange, className }: Pro
     if (editor && editor.getValue() !== value) editor.setValue(value);
   }, [value]);
 
-  return (
-    <div ref={hostRef} dir="ltr" className={`xml-editor${className ? ` ${className}` : ""}`} />
-  );
+  return <div ref={hostRef} dir="ltr" className={`xml-editor${className ? ` ${className}` : ''}`} />;
 }

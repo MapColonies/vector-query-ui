@@ -31,5 +31,5 @@ export function propertyLabel(p: LayerProperty): string {
 }
 
 export function isGeometryProperty(p: LayerProperty): boolean {
-  return p.type.startsWith("gml:");
+  return p.type.startsWith('gml:');
 }

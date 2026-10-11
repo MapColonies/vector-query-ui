@@ -7,9 +7,10 @@
  * do nothing. The old selection-based trick still works there.
  */
 export async function copyText(text: string): Promise<boolean> {
-  if (navigator.clipboard?.writeText) {
+  const clipboard = navigator.clipboard as Clipboard | undefined;
+  if (clipboard) {
     try {
-      await navigator.clipboard.writeText(text);
+      await clipboard.writeText(text);
       return true;
     } catch {
       // denied or unavailable — try the fallback below
@@ -17,16 +18,16 @@ export async function copyText(text: string): Promise<boolean> {
   }
 
   try {
-    const area = document.createElement("textarea");
+    const area = document.createElement('textarea');
     area.value = text;
-    area.setAttribute("readonly", "");
+    area.setAttribute('readonly', '');
     // off-screen rather than hidden: it has to be selectable to be copied
-    area.style.position = "fixed";
-    area.style.top = "-1000px";
-    area.style.opacity = "0";
+    area.style.position = 'fixed';
+    area.style.top = '-1000px';
+    area.style.opacity = '0';
     document.body.appendChild(area);
     area.select();
-    const copied = document.execCommand("copy");
+    const copied = document.execCommand('copy');
     document.body.removeChild(area);
     return copied;
   } catch {

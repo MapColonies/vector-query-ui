@@ -2,7 +2,7 @@ services:
   geo-query-ui:
     build: .
     ports:
-      - "8080:8080"
+      - '8080:8080'
     # config.json is rendered from these at startup; the full mapping lives in
     # config/custom-environment-variables.json. Mounting a file over
     # /usr/share/nginx/html/config.json also still works, but then the

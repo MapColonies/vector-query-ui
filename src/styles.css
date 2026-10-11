@@ -8,8 +8,8 @@
   --accent-soft: rgba(92, 200, 255, 0.12);
   --warn: #ffd166;
   --danger: #ff7a7a;
-  --font-ui: "Inter", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-ui: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 * {
@@ -92,11 +92,11 @@ body {
   flex-shrink: 0;
 }
 
-.app[dir="ltr"] .panel-scroll {
+.app[dir='ltr'] .panel-scroll {
   direction: ltr;
 }
 
-.app[dir="rtl"] .panel-scroll {
+.app[dir='rtl'] .panel-scroll {
   direction: rtl;
 }
 
@@ -797,7 +797,7 @@ tbody tr:hover {
 
 /* spine linking consecutive versions */
 .timeline-item:not(:last-child)::before {
-  content: "";
+  content: '';
   position: absolute;
   inset-inline-start: 11px;
   top: 21px;
@@ -953,7 +953,7 @@ tbody tr:hover {
 }
 
 .timeline-item:not(:last-child)::before {
-  content: "";
+  content: '';
   position: absolute;
   inset-inline-start: 11px;
   top: 22px;

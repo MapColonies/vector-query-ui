@@ -9,19 +9,19 @@
  * so the image picks up its environment at startup. Vite does the same thing
  * for `npm run dev` and `npm run build` — see vite.config.ts.
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { ConfigError, injectConfig, renderNginxProxy, resolveConfig } from "./app-config.mjs";
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { ConfigError, injectConfig, renderNginxProxy, resolveConfig } from './app-config.mjs';
 
 function parseArgs(argv) {
   const args = { print: false, quiet: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--html") args.html = argv[++i];
-    else if (a === "--nginx") args.nginx = argv[++i];
-    else if (a === "--config-dir" || a === "-c") args.configDir = argv[++i];
-    else if (a === "--print") args.print = true;
-    else if (a === "--quiet" || a === "-q") args.quiet = true;
+    if (a === '--html') args.html = argv[++i];
+    else if (a === '--nginx') args.nginx = argv[++i];
+    else if (a === '--config-dir' || a === '-c') args.configDir = argv[++i];
+    else if (a === '--print') args.print = true;
+    else if (a === '--quiet' || a === '-q') args.quiet = true;
     else die(`unknown argument "${a}"`);
   }
   if (!args.html) args.print = true;
@@ -36,7 +36,7 @@ function die(message) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const { config, proxy, sources, applied, nodeEnv } = resolveConfig({
-    configDir: args.configDir ?? process.env.CONFIG_DIR
+    configDir: args.configDir ?? process.env.CONFIG_DIR,
   });
 
   if (args.print) {
@@ -44,21 +44,19 @@ function main() {
     return;
   }
 
-  writeFileSync(args.html, injectConfig(readFileSync(args.html, "utf8"), config));
+  writeFileSync(args.html, injectConfig(readFileSync(args.html, 'utf8'), config));
 
   if (args.nginx) {
     mkdirSync(args.nginx, { recursive: true });
-    writeFileSync(join(args.nginx, "proxy.conf"), renderNginxProxy(proxy));
+    writeFileSync(join(args.nginx, 'proxy.conf'), renderNginxProxy(proxy));
   }
 
   if (!args.quiet) {
-    console.log(
-      `✓ config: injected into ${args.html} (NODE_ENV=${nodeEnv}, sources: ${sources.join(" → ")})`
-    );
-    if (applied.length > 0) console.log(`  environment overrides: ${applied.join(", ")}`);
+    console.log(`✓ config: injected into ${args.html} (NODE_ENV=${nodeEnv}, sources: ${sources.join(' → ')})`);
+    if (applied.length > 0) console.log(`  environment overrides: ${applied.join(', ')}`);
     const prefixes = Object.keys(proxy);
     if (args.nginx && prefixes.length > 0) {
-      console.log(`  proxying same-origin: ${prefixes.join(", ")}`);
+      console.log(`  proxying same-origin: ${prefixes.join(', ')}`);
     }
   }
 }

@@ -1,12 +1,15 @@
-import { useMemo, useRef, useState } from "react";
-import type Feature from "ol/Feature";
-import type Geometry from "ol/geom/Geometry";
+import { useMemo, useRef, useState } from 'react';
+import type Feature from 'ol/Feature';
 
 interface Props {
-  feature: Feature<Geometry> | null;
+  feature: Feature | null;
 }
 
-type Vec3 = { x: number; y: number; z: number };
+interface Vec3 {
+  x: number;
+  y: number;
+  z: number;
+}
 
 interface Solid {
   property: string;
@@ -18,39 +21,39 @@ interface Solid {
   height: number | null;
 }
 
-const HEIGHT_KEYS = ["relative_feature_height", "height", "building_height"];
+const HEIGHT_KEYS = ['relative_feature_height', 'height', 'building_height'];
 
 function rings(input: unknown, depth: number): number[][][] {
   if (!Array.isArray(input) || input.length === 0) return [];
-  if (typeof input[0] === "number") return [];
-  if (typeof (input[0] as unknown[])[0] === "number") return [input as number[][]];
+  if (typeof input[0] === 'number') return [];
+  if (typeof (input[0] as unknown[])[0] === 'number') return [input as number[][]];
   return (input as unknown[]).flatMap((v) => rings(v, depth + 1));
 }
 
-function findGeometry(feature: Feature<Geometry>): { property: string; coords: unknown; type: string } | null {
+function findGeometry(feature: Feature): { property: string; coords: unknown; type: string } | null {
   for (const [property, value] of Object.entries(feature.getProperties())) {
     const g = value as { getCoordinates?: () => unknown; getType?: () => string } | null;
-    if (!g || typeof g.getCoordinates !== "function") continue;
+    if (!g || typeof g.getCoordinates !== 'function') continue;
     const coords = g.getCoordinates();
     const flat = rings(coords, 0);
-    const probe = flat.length > 0 ? flat[0][0] : (Array.isArray(coords) && typeof (coords as number[])[0] === "number" ? (coords as number[]) : null);
+    const probe = flat.length > 0 ? flat[0][0] : Array.isArray(coords) && typeof (coords as number[])[0] === 'number' ? (coords as number[]) : null;
     if (!probe || probe.length < 3 || !Number.isFinite(probe[2])) continue;
-    return { property, coords, type: typeof g.getType === "function" ? g.getType() : "" };
+    return { property, coords, type: typeof g.getType === 'function' ? g.getType() : '' };
   }
   return null;
 }
 
-function heightOf(feature: Feature<Geometry>): number | null {
+function heightOf(feature: Feature): number | null {
   const props = feature.getProperties();
   for (const key of HEIGHT_KEYS) {
-    const raw = props[key];
-    const n = typeof raw === "string" ? Number(raw) : (raw as number);
-    if (Number.isFinite(n) && n > 0) return n as number;
+    const raw: unknown = props[key];
+    const n = typeof raw === 'string' ? Number(raw) : (raw as number);
+    if (Number.isFinite(n) && n > 0) return n;
   }
   return null;
 }
 
-function build(feature: Feature<Geometry> | null): Solid | null {
+function build(feature: Feature | null): Solid | null {
   if (!feature) return null;
   const found = findGeometry(feature);
   if (!found) return null;
@@ -71,7 +74,7 @@ function build(feature: Feature<Geometry> | null): Solid | null {
   const to3 = (c: number[]): Vec3 => ({
     x: (c[0] - lon0) * mPerLon,
     y: (c[1] - lat0) * mPerLat,
-    z: c[2] - zMin
+    z: c[2] - zMin,
   });
 
   const height = heightOf(feature);
@@ -83,7 +86,10 @@ function build(feature: Feature<Geometry> | null): Solid | null {
     const s = Math.max(2, (zMax - zMin) * 0.15, 4);
     const h = height ?? s * 3;
     const box = [
-      [-s, -s], [s, -s], [s, s], [-s, s]
+      [-s, -s],
+      [s, -s],
+      [s, s],
+      [-s, s],
     ].map(([dx, dy]) => ({ x: p.x + dx, y: p.y + dy, z: p.z }));
     const top = box.map((v) => ({ ...v, z: v.z + h }));
     faces.push(top);
@@ -91,7 +97,10 @@ function build(feature: Feature<Geometry> | null): Solid | null {
       const j = (i + 1) % box.length;
       faces.push([box[i], box[j], top[j], top[i]]);
     }
-  } else if (found.type.includes("LineString") || polys.some((r) => r.length > 1 && (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1]))) {
+  } else if (
+    found.type.includes('LineString') ||
+    polys.some((r) => r.length > 1 && (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1]))
+  ) {
     for (const ring of polys) lines.push(ring.map(to3));
     const drop = Math.max((zMax - zMin) * 0.25, 2);
     for (const ring of polys) {
@@ -99,12 +108,7 @@ function build(feature: Feature<Geometry> | null): Solid | null {
       for (let i = 0; i < path.length - 1; i += 1) {
         const a = path[i];
         const b = path[i + 1];
-        faces.push([
-          { ...a, z: a.z - drop },
-          { ...b, z: b.z - drop },
-          b,
-          a
-        ]);
+        faces.push([{ ...a, z: a.z - drop }, { ...b, z: b.z - drop }, b, a]);
       }
     }
   } else {
@@ -173,9 +177,7 @@ export default function Feature3D({ feature }: Props) {
   const oy = height / 2 - ((minY + maxY) / 2) * scale;
   const xy = (p: { sx: number; sy: number }) => `${(p.sx * scale + ox).toFixed(1)},${(p.sy * scale + oy).toFixed(1)}`;
 
-  const ordered = projected
-    .map((f, i) => ({ f, i, depth: f.reduce((s, p) => s + p.depth, 0) / f.length }))
-    .sort((a, b) => b.depth - a.depth);
+  const ordered = projected.map((f, i) => ({ f, i, depth: f.reduce((s, p) => s + p.depth, 0) / f.length })).sort((a, b) => b.depth - a.depth);
 
   const onDown = (e: React.PointerEvent<SVGSVGElement>) => {
     drag.current = { x: e.clientX, y: e.clientY };
@@ -197,7 +199,9 @@ export default function Feature3D({ feature }: Props) {
     <section className="feature3d">
       <div className="feature3d-header">
         <span>3D geometry</span>
-        <span className="feature3d-property mono" dir="ltr">{solid.property}</span>
+        <span className="feature3d-property mono" dir="ltr">
+          {solid.property}
+        </span>
       </div>
 
       <svg
@@ -215,7 +219,7 @@ export default function Feature3D({ feature }: Props) {
           return (
             <polygon
               key={i}
-              points={f.map(xy).join(" ")}
+              points={f.map(xy).join(' ')}
               fill={`hsl(207 68% ${(l * 62).toFixed(1)}%)`}
               stroke={`hsl(207 60% ${(l * 42).toFixed(1)}%)`}
               strokeWidth={0.6}
@@ -223,17 +227,29 @@ export default function Feature3D({ feature }: Props) {
           );
         })}
         {projLines.map((l, i) => (
-          <polyline key={`l${i}`} className="feature3d-outline" points={l.map(xy).join(" ")} fill="none" />
+          <polyline key={`l${i}`} className="feature3d-outline" points={l.map(xy).join(' ')} fill="none" />
         ))}
       </svg>
 
       <dl className="feature3d-stats">
-        <div><dt>base</dt><dd className="mono">{solid.zMin.toFixed(2)} m</dd></div>
-        <div><dt>top</dt><dd className="mono">{(solid.height ? solid.zMax + solid.height : solid.zMax).toFixed(2)} m</dd></div>
+        <div>
+          <dt>base</dt>
+          <dd className="mono">{solid.zMin.toFixed(2)} m</dd>
+        </div>
+        <div>
+          <dt>top</dt>
+          <dd className="mono">{(solid.height ? solid.zMax + solid.height : solid.zMax).toFixed(2)} m</dd>
+        </div>
         {solid.height !== null && (
-          <div><dt>height</dt><dd className="mono">{solid.height.toFixed(2)} m</dd></div>
+          <div>
+            <dt>height</dt>
+            <dd className="mono">{solid.height.toFixed(2)} m</dd>
+          </div>
         )}
-        <div><dt>vertices</dt><dd className="mono">{solid.vertices}</dd></div>
+        <div>
+          <dt>vertices</dt>
+          <dd className="mono">{solid.vertices}</dd>
+        </div>
       </dl>
     </section>
   );

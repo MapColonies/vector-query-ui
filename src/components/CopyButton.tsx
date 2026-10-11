@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { copyText } from "../clipboard";
+import { useState } from 'react';
+import { copyText } from '../clipboard';
 
 interface Props {
   text: string;
@@ -8,18 +8,18 @@ interface Props {
 }
 
 /** Copies `text` to the clipboard, then says whether it worked. */
-export default function CopyButton({ text, className = "code-copy" }: Props) {
-  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+export default function CopyButton({ text, className = 'code-copy' }: Props) {
+  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   async function copy(e: React.MouseEvent) {
     e.stopPropagation();
-    setState((await copyText(text)) ? "copied" : "failed");
-    setTimeout(() => setState("idle"), 1600);
+    setState((await copyText(text)) ? 'copied' : 'failed');
+    setTimeout(() => setState('idle'), 1600);
   }
 
   return (
-    <button type="button" className={className} onClick={copy}>
-      {state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : "Copy"}
+    <button type="button" className={className} onClick={(e) => void copy(e)}>
+      {state === 'copied' ? 'Copied' : state === 'failed' ? 'Copy failed' : 'Copy'}
     </button>
   );
 }
