@@ -65,5 +65,7 @@ export default defineConfig(({ command }) => ({
   plugins: [cesium(), react(), appConfig()],
   // Only the dev server uses the proxy map; nginx renders it in the image.
   server: { port: 5173, proxy: devProxy(resolveConfig({ strict: command === 'serve' }).proxy) },
+  // relative, so the same build works at / or behind any path prefix (e.g. a gateway route)
+  base: './',
   build: { outDir: 'dist', sourcemap: true },
 }));
