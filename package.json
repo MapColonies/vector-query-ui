@@ -1,7 +1,7 @@
 {
   "name": "geo-query-ui",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "scripts": {
     "config:print": "node scripts/build-config.mjs --print",
