@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/MapColonies/vector-query-ui/compare/v1.1.1...v1.2.0) (2026-10-12)
+
+
+### Features
+
+* show the extrusion values in the 3D view ([341fe81](https://github.com/MapColonies/vector-query-ui/commit/341fe811667d585d72ddbdb132c48d12e86cf514))
+
 ## [1.1.1](https://github.com/MapColonies/vector-query-ui/compare/v1.1.0...v1.1.1) (2026-10-12)
 
 
