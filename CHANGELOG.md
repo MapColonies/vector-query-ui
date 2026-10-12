@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/MapColonies/vector-query-ui/compare/v1.1.0...v1.1.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* build with a relative base so the app works behind a path prefix ([65d48bf](https://github.com/MapColonies/vector-query-ui/commit/65d48bf2cb5ed18f18ef0ea936a24ebb3d326ecc))
+
 ## [1.1.0](https://github.com/MapColonies/vector-query-ui/compare/v1.0.0...v1.1.0) (2026-10-11)
 
 
