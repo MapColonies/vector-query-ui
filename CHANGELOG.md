@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/MapColonies/vector-query-ui/compare/v1.2.0...v1.2.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* extrude the 3d geometry, not the 2d one padded with zero heights ([9fc8636](https://github.com/MapColonies/vector-query-ui/commit/9fc86361a357389c6959c6bf007fe90a72df9f61))
+
 ## [1.2.0](https://github.com/MapColonies/vector-query-ui/compare/v1.1.1...v1.2.0) (2026-10-12)
 
 
