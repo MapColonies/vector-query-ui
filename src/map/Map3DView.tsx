@@ -39,22 +39,31 @@ function rings(input: unknown): number[][][] {
   return (input as unknown[]).flatMap(rings);
 }
 
+/**
+ * The feature's 3D geometry. OpenLayers pads 2D GML coordinates with Z = 0, so a feature
+ * carrying both a 2D and a 3D geometry looks 3D twice over; the one with real Z values wins,
+ * and an all-zero one is only used when there is nothing else.
+ */
 function threeD(feature: Feature) {
+  let padded: { property: string; coords: unknown; type: string } | null = null;
   for (const [property, value] of Object.entries(feature.getProperties())) {
     const g = value as { getCoordinates?: () => unknown; getType?: () => string } | null;
     if (!g || typeof g.getCoordinates !== 'function') continue;
     const coords = g.getCoordinates();
     const flat = rings(coords);
-    const probe = flat.length > 0 ? flat[0][0] : Array.isArray(coords) && typeof (coords as number[])[0] === 'number' ? (coords as number[]) : null;
-    if (!probe || probe.length < 3 || !Number.isFinite(probe[2])) continue;
-    return { property, coords, type: typeof g.getType === 'function' ? g.getType() : '' };
+    const points = flat.length > 0 ? flat.flat() : Array.isArray(coords) && typeof (coords as number[])[0] === 'number' ? [coords as number[]] : [];
+    if (points.length === 0 || points[0].length < 3 || !Number.isFinite(points[0][2])) continue;
+    const found = { property, coords, type: typeof g.getType === 'function' ? g.getType() : '' };
+    if (points.some((c) => c[2] !== 0)) return found;
+    padded ??= found;
   }
-  return null;
+  return padded;
 }
 
 /** What one feature's extrusion was computed from, shown in the 3D view for debugging. */
 interface ExtrusionInfo {
   id: string;
+  geometry: string;
   from: string;
   to: string;
   fromValue: unknown;
@@ -212,6 +221,7 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
               : 0;
       const info: ExtrusionInfo = {
         id: String(feature.getId() ?? '(no id)'),
+        geometry: found.property,
         from: extrude.from,
         to: extrude.to,
         fromValue: extrude.from === COORDINATES ? 'geometry Z' : extrude.from === '' ? '(not set)' : feature.get(extrude.from),
@@ -288,7 +298,9 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
       {status && <div className="map3d-status">{status}</div>}
       {extrusion && (
         <div className="map3d-extrusion">
-          <div>feature {extrusion.id}</div>
+          <div>
+            feature {extrusion.id} · geometry <b>{extrusion.geometry}</b>
+          </div>
           <div>
             from <b>{extrusion.from || '(not set)'}</b> = {raw(extrusion.fromValue)}
           </div>
