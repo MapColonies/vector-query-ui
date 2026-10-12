@@ -52,6 +52,21 @@ function threeD(feature: Feature) {
   return null;
 }
 
+/** What one feature's extrusion was computed from, shown in the 3D view for debugging. */
+interface ExtrusionInfo {
+  id: string;
+  from: string;
+  to: string;
+  fromValue: unknown;
+  toValue: unknown;
+  zRange: [number, number];
+  base: number | null;
+  drawn: [number, number | null];
+}
+
+const fmt = (n: number | null): string => (n === null ? '—' : String(Math.round(n * 1000) / 1000));
+const raw = (v: unknown): string => (v === undefined ? 'missing' : JSON.stringify(v));
+
 function fieldHeight(feature: Feature, field: string): number | null {
   if (field === '' || field === COORDINATES) return null;
   const raw: unknown = feature.get(field);
@@ -111,6 +126,7 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
   const viewer = useRef<Viewer | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [extrusion, setExtrusion] = useState<ExtrusionInfo | null>(null);
 
   useEffect(() => {
     if (!host.current || viewer.current) return;
@@ -170,6 +186,7 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
     const extrude = { from: config.threeD?.extrude?.from ?? '', to: config.threeD?.extrude?.to ?? COORDINATES };
 
     let drew = 0;
+    let shown: ExtrusionInfo | null = null;
     for (const feature of features) {
       const found = threeD(feature);
       if (!found) continue;
@@ -181,6 +198,30 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
       const allZs = polys.length === 0 ? [(found.coords as number[])[2]] : polys.flat().map((c) => c[2]);
       const base = bottomIsZ ? Math.min(...allZs) : bottom;
       const lift = (c: number[]): number[] => [c[0], c[1], (bottomIsZ || top === null ? c[2] : top) - (base ?? 0)];
+
+      const lifted = allZs.map((z) => (bottomIsZ || top === null ? z : top) - (base ?? 0));
+      const extrudedTo =
+        polys.length === 0 || !found.type.includes('Polygon')
+          ? null
+          : bottomIsZ
+            ? top === null
+              ? null
+              : top - (base ?? 0)
+            : base === null
+              ? null
+              : 0;
+      const info: ExtrusionInfo = {
+        id: String(feature.getId() ?? '(no id)'),
+        from: extrude.from,
+        to: extrude.to,
+        fromValue: extrude.from === COORDINATES ? 'geometry Z' : extrude.from === '' ? '(not set)' : feature.get(extrude.from),
+        toValue: extrude.to === COORDINATES ? 'geometry Z' : extrude.to === '' ? '(not set)' : feature.get(extrude.to),
+        zRange: [Math.min(...allZs), Math.max(...allZs)],
+        base,
+        drawn: [Math.min(...lifted), extrudedTo],
+      };
+      console.debug('[Map3DView] extrusion', info);
+      if (isSelected || shown === null) shown = info;
 
       if (polys.length === 0) {
         const c = lift(toLonLat(found.coords as number[]));
@@ -228,6 +269,7 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
       }
     }
 
+    setExtrusion(shown);
     if (drew > 0) {
       v.zoomTo(v.entities).catch(() => undefined);
     }
@@ -244,6 +286,24 @@ export default function Map3DView({ features, selectedFeature, srsName, config }
   return (
     <div className="map3d" ref={host}>
       {status && <div className="map3d-status">{status}</div>}
+      {extrusion && (
+        <div className="map3d-extrusion">
+          <div>feature {extrusion.id}</div>
+          <div>
+            from <b>{extrusion.from || '(not set)'}</b> = {raw(extrusion.fromValue)}
+          </div>
+          <div>
+            to <b>{extrusion.to}</b> = {raw(extrusion.toValue)}
+          </div>
+          <div>
+            geometry Z {fmt(extrusion.zRange[0])} … {fmt(extrusion.zRange[1])}
+          </div>
+          <div>base subtracted {fmt(extrusion.base)}</div>
+          <div>
+            drawn at {fmt(extrusion.drawn[0])} m, extruded to {fmt(extrusion.drawn[1])} m
+          </div>
+        </div>
+      )}
     </div>
   );
 }
