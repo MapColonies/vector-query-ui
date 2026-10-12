@@ -35,7 +35,7 @@
     "@types/proj4": "^2.5.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.1.2",
     "@vitest/eslint-plugin": "^1.6.27",
     "eslint": "^10.8.1",
     "eslint-plugin-react": "^7.37.5",
